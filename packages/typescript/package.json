@@ -53,7 +53,7 @@
   "devDependencies": {
     "@vitest/coverage-v8": "^2.1.9",
     "lint-staged": "^15.2.10",
-    "oxfmt": "^0.15.0",
+    "oxfmt": "^0.63.0",
     "oxlint": "^0.15.0",
     "release-it": "^18.1.2",
     "typescript": "^5.7.3",
