@@ -1,0 +1,47 @@
+name: Swift release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    env:
+      SWIFT_FORMAT_REF: swift-DEVELOPMENT-SNAPSHOT-2024-08-16-a
+      SWIFTLINT_REF: 0.57.0
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate semantic-version tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+      - uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "5.10"
+      - name: Install pinned swift-format
+        shell: bash
+        run: |
+          git clone --depth 1 --branch "$SWIFT_FORMAT_REF" https://github.com/swiftlang/swift-format "$RUNNER_TEMP/swift-format"
+          swift build --package-path "$RUNNER_TEMP/swift-format" -c release
+          echo "$RUNNER_TEMP/swift-format/.build/release" >> "$GITHUB_PATH"
+          test -x "$RUNNER_TEMP/swift-format/.build/release/swift-format"
+      - name: Install pinned SwiftLint
+        shell: bash
+        run: |
+          git clone --depth 1 --branch "$SWIFTLINT_REF" https://github.com/realm/SwiftLint "$RUNNER_TEMP/swiftlint"
+          swift build --package-path "$RUNNER_TEMP/swiftlint" -c release
+          echo "$RUNNER_TEMP/swiftlint/.build/release" >> "$GITHUB_PATH"
+          test -x "$RUNNER_TEMP/swiftlint/.build/release/swiftlint"
+      - run: swift test
+      - run: swift-format lint --strict --configuration .swift-format packages/swift/Sources packages/swift/Tests
+      - run: swiftlint lint --strict --no-cache --config .swiftlint.yml packages/swift/Sources packages/swift/Tests
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body_path: packages/swift/CHANGELOG.md

@@ -1,0 +1,65 @@
+{
+  "name": "@clover/sdk",
+  "version": "0.1.0",
+  "description": "Official TypeScript client for the Clover email API",
+  "keywords": ["clover", "email", "api", "sdk"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openmirai/clover-sdks.git",
+    "directory": "packages/typescript"
+  },
+  "bugs": { "url": "https://github.com/openmirai/clover-sdks/issues" },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./nestjs": {
+      "types": "./dist/integrations/nestjs.d.ts",
+      "import": "./dist/integrations/nestjs.js"
+    },
+    "./chat": {
+      "types": "./dist/integrations/chat.d.ts",
+      "import": "./dist/integrations/chat.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE", "CHANGELOG.md"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && vitest run",
+    "test:coverage": "npm run build && vitest run --coverage",
+    "lint": "oxlint src test",
+    "format": "oxfmt src test",
+    "format:check": "oxfmt --check src test",
+    "lint:staged": "lint-staged",
+    "release": "release-it"
+  },
+  "license": "MIT",
+  "engines": { "node": ">=20" },
+  "publishConfig": { "access": "public" },
+  "peerDependencies": {
+    "@nestjs/common": "^10.0.0 || ^11.0.0",
+    "chat": ">=4"
+  },
+  "peerDependenciesMeta": {
+    "@nestjs/common": { "optional": true },
+    "chat": { "optional": true }
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.1.9",
+    "lint-staged": "^15.2.10",
+    "oxfmt": "^0.15.0",
+    "oxlint": "^0.15.0",
+    "release-it": "^18.1.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.9"
+  },
+  "lint-staged": {
+    "*.{ts,mjs}": ["oxlint --fix", "oxfmt"]
+  }
+}

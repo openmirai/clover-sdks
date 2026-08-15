@@ -1,0 +1,32 @@
+name: Clover CLI release
+
+on:
+  push:
+    tags: ["apps/cli/v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Validate SemVer tag
+        run: |
+          [[ "$GITHUB_REF_NAME" =~ ^apps/cli/v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.24.x" }
+      - name: Verify GoReleaser tag is the release source
+        env:
+          TAG: ${{ github.ref_name }}
+        run: test "$(git describe --exact-match --tags "$GITHUB_SHA")" = "$TAG"
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: release --clean
+          workdir: apps/cli
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

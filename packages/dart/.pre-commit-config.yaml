@@ -1,0 +1,13 @@
+repos:
+  - repo: local
+    hooks:
+      - id: dart-format
+        name: dart format
+        entry: dart format --output=none --set-exit-if-changed
+        language: system
+        files: \.dart$
+      - id: dart-analyze
+        name: dart analyze
+        entry: dart analyze
+        language: system
+        files: \.dart$

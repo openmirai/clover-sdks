@@ -1,0 +1,15 @@
+.dart_tool/
+.packages
+build/
+coverage/
+.flutter-plugins
+.flutter-plugins-dependencies
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+.DS_Store

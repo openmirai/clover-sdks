@@ -1,0 +1,14 @@
+include: package:lints/recommended.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  exclude:
+    - .dart_tool/**
+
+linter:
+  rules:
+    avoid_print: false
+    public_member_api_docs: false

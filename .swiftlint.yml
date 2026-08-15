@@ -1,0 +1,17 @@
+included:
+  - packages/swift/Sources
+  - packages/swift/Tests
+excluded:
+  - .build
+disabled_rules:
+  - control_statement
+  - file_length
+  - line_length
+  - non_optional_string_data_conversion
+  - statement_position
+line_length: 140
+identifier_name:
+  min_length: 2
+type_name:
+  min_length: 2
+reporter: github-actions-logging

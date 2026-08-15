@@ -1,0 +1,6 @@
+{
+  "$schema": "https://oxc.rs/schema/oxlintrc.json",
+  "rules": {
+    "no-unused-vars": "error"
+  }
+}

@@ -1,0 +1,13 @@
+name: clover_sdk
+description: A typed, transport-injectable Dart client for the Clover email API.
+version: 0.1.0
+repository: https://github.com/openmirai/clover-sdks/tree/main/packages/dart
+homepage: https://github.com/openmirai/clover-sdks
+issue_tracker: https://github.com/openmirai/clover-sdks/issues
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+dependencies:
+  http: ^1.2.2
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.25.0

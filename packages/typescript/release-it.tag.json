@@ -1,0 +1,10 @@
+{
+  "git": {
+    "commit": false,
+    "tag": false,
+    "push": false,
+    "requireCleanWorkingDir": true
+  },
+  "npm": { "publish": true },
+  "github": { "release": true }
+}

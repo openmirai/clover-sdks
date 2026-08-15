@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: maven-verify
+        name: Maven verify
+        entry: mvn -B -ntp verify
+        language: system
+        pass_filenames: false

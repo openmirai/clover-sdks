@@ -1,0 +1,14 @@
+.build/
+.swiftpm/
+DerivedData/
+.DS_Store
+*.xcuserstate
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+coverage/

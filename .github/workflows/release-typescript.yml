@@ -1,0 +1,40 @@
+name: TypeScript SDK release
+
+on:
+  push:
+    tags: ["typescript/v*"]
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/typescript
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Validate SemVer tag
+        run: |
+          [[ "$GITHUB_REF_NAME" =~ ^typescript/v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: packages/typescript/package-lock.json
+      - name: Verify tag matches package version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          test "$TAG" = "typescript/v$VERSION"
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - run: npx release-it --ci --config release-it.tag.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true

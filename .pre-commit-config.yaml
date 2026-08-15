@@ -1,0 +1,44 @@
+repos:
+  - repo: local
+    hooks:
+      - id: repository-layout
+        name: repository layout
+        entry: python3 scripts/check_repository.py
+        language: system
+        pass_filenames: false
+      - id: typescript
+        name: TypeScript Oxc
+        entry: sh -c 'npm --prefix packages/typescript run lint && npm --prefix packages/typescript run format:check'
+        language: system
+        files: ^packages/typescript/.*\.(ts|mjs|json)$
+        pass_filenames: false
+      - id: python
+        name: Python Ruff
+        entry: sh -c 'cd packages/python && python3 -m ruff check . && python3 -m ruff format --check .'
+        language: system
+        files: ^packages/python/.*\.py$
+        pass_filenames: false
+      - id: go
+        name: Go formatting
+        entry: sh -c 'test -z "$(gofmt -l packages/go apps/cli)"'
+        language: system
+        files: ^(packages/go|apps/cli)/.*\.go$
+        pass_filenames: false
+      - id: rust
+        name: Rust formatting
+        entry: cargo fmt --manifest-path packages/rust/Cargo.toml --all --check
+        language: system
+        files: ^packages/rust/.*\.rs$
+        pass_filenames: false
+      - id: swift
+        name: Swift formatting
+        entry: swift-format lint --strict --configuration .swift-format packages/swift/Sources packages/swift/Tests
+        language: system
+        files: ^packages/swift/.*\.swift$
+        pass_filenames: false
+      - id: dart
+        name: Dart formatting
+        entry: dart format --output=none --set-exit-if-changed packages/dart
+        language: system
+        files: ^packages/dart/.*\.dart$
+        pass_filenames: false

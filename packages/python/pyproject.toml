@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "clover-sdk"
+version = "0.1.0"
+description = "Dependency-free Python client for the Clover email API"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Clover" }]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/openmirai/clover-sdks/tree/main/packages/python"
+Repository = "https://github.com/openmirai/clover-sdks"
+Issues = "https://github.com/openmirai/clover-sdks/issues"
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2,<2",
+  "mypy>=1.13,<2",
+  "pytest>=8.3,<9",
+  "pytest-cov>=6,<7",
+  "ruff>=0.9,<1",
+  "twine>=6,<7",
+]
+
+[tool.setuptools.packages.find]
+include = ["clover_sdk*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-config", "--strict-markers"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+extend-exclude = ["build", "dist"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["clover_sdk"]
+
+[tool.coverage.run]
+source = ["clover_sdk"]
+
+[tool.coverage.report]
+exclude_lines = ["if TYPE_CHECKING:", "pragma: no cover"]
+fail_under = 80

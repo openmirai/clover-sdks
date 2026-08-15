@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: clover-typescript-lint-staged
+        name: Clover TypeScript lint-staged
+        entry: npm run lint:staged
+        language: system
+        pass_filenames: false
