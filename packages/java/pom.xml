@@ -69,7 +69,7 @@
             <executions><execution><id>attach-javadocs</id><phase>package</phase><goals><goal>jar</goal></goals></execution></executions>
           </plugin>
           <plugin>
-            <groupId>org.sonatype.central</groupId><artifactId>central-publishing-maven-plugin</artifactId><version>0.9.0</version>
+            <groupId>org.sonatype.central</groupId><artifactId>central-publishing-maven-plugin</artifactId><version>0.11.0</version>
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>central</publishingServerId>
