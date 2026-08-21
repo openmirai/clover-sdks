@@ -4,29 +4,25 @@ Verified: 2026-08-20
 
 ## Coverage
 
-Resend currently lists Node.js, PHP, Laravel, Python, Ruby, Go, Java, Rust, and
-.NET as official SDKs, plus community SDKs for Elixir, NestJS, and Dart. Clover
-maintains one official monorepo for the supported client set below; PHP,
-Laravel, Ruby, .NET, and Elixir remain documentation-only community targets:
+Resend maintains a broad SDK ecosystem. Clover's current supported client
+contract is intentionally narrower: the Go SDK and the Go-based CLI are the
+only release-ready clients in this milestone.
 
 | Ecosystem | Clover repository | Integration notes |
 | --- | --- | --- |
-| Node.js / TypeScript / NestJS / Chat SDK | `packages/typescript` | ESM package exports; native `@clover/sdk` + Resend drop-in `@clover/sdk/resend`; optional NestJS provider and Vercel Chat SDK adapter subpath |
-| Python | `packages/python` | Typed sync client |
 | Go | `packages/go` | Go module |
-| Java / Kotlin JVM | `packages/java` | Java client usable from Kotlin/JVM |
-| Rust | `packages/rust` | crates.io package |
-| Dart / Flutter | `packages/dart` | pub.dev package |
-| Swift / Apple platforms | `packages/swift` with root `Package.swift` | Swift Package Manager package |
 | CLI | `apps/cli` | GoReleaser multi-platform binary |
 | OpenAPI | `openapi/clover-v1.json` | Snapshot synced from Clover backend `make swagger` (`/api/v1` + `CommonResponse`) |
 
-Documentation-only community guides for the deferred ecosystems are maintained
-at [`docs/community/`](community/). They define contract-first REST
-usage and generated-client options but make no package, framework, or support
-claim.
+TypeScript, Python, Java/Kotlin, Rust, Swift, and Dart/Flutter package
+directories are deferred and carry no current support, compatibility, or
+publication claim. Documentation-only community guides are maintained at
+[`docs/community/`](community/).
 
-## Layering (TypeScript)
+## Deferred TypeScript design notes
+
+This section records future design intent only. It is not part of the current
+support or readiness claim.
 
 1. **Native** — `import { CloverClient } from "@clover/sdk"`
    Clover-shaped API over `/api/v1`, unwraps `CommonResponse`, parses
@@ -42,8 +38,8 @@ claim.
 
 ## Required client behavior
 
-Every SDK exposes the canonical send, batch send, schedule, cancel, get, and
-list operations when the public Clover contract supports them. Every client:
+The Go SDK exposes the canonical Phase 1 operations supported by the public
+Clover contract. The Go SDK and CLI:
 
 - authenticates with a bearer API key and identifies its language/version in
   `User-Agent`;
@@ -85,9 +81,9 @@ The monorepo and each independently published package must include:
 6. No committed tokens, live endpoints in tests, generated build artifacts, or
    network-dependent unit tests.
 
-## TypeScript baseline
+## Deferred TypeScript baseline
 
-The TypeScript SDK must use:
+Before future support, the TypeScript SDK must use:
 
 - `release-it` for versioning and tag/release orchestration;
 - Vitest for unit/conformance tests;
@@ -96,7 +92,7 @@ The TypeScript SDK must use:
 - strict TypeScript declarations, package export maps, provenance-enabled npm
   publishing, and supported Node.js CI versions.
 
-## New-language baselines
+## Deferred language baselines
 
 - Swift: Swift Package Manager, XCTest, swift-format, SwiftLint, DocC-ready
   public API, Apple/Linux CI where supported, semantic tags.

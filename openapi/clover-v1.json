@@ -22,7 +22,12 @@
                         "type": "string"
                     },
                     "domain_id": {
-                        "type": "string"
+                        "type": "string",
+                        "x-nullable": true
+                    },
+                    "environment": {
+                        "type": "string",
+                        "x-nullable": true
                     },
                     "expires_at": {
                         "type": "string"
@@ -42,6 +47,10 @@
                     "prefix": {
                         "type": "string"
                     },
+                    "project_id": {
+                        "type": "string",
+                        "x-nullable": true
+                    },
                     "public_key_id": {
                         "type": "string"
                     },
@@ -56,10 +65,16 @@
                     "domain_id": {
                         "type": "string"
                     },
+                    "environment": {
+                        "type": "string"
+                    },
                     "name": {
                         "type": "string"
                     },
                     "permission": {
+                        "type": "string"
+                    },
+                    "project_id": {
                         "type": "string"
                     }
                 },
@@ -78,11 +93,23 @@
             },
             "apikey.UpdateAPIKeyRequest": {
                 "properties": {
+                    "domain_id": {
+                        "type": "string",
+                        "x-nullable": true
+                    },
+                    "environment": {
+                        "type": "string",
+                        "x-nullable": true
+                    },
                     "name": {
                         "type": "string"
                     },
                     "permission": {
                         "type": "string"
+                    },
+                    "project_id": {
+                        "type": "string",
+                        "x-nullable": true
                     }
                 },
                 "type": "object"
@@ -669,10 +696,94 @@
                 },
                 "type": "object"
             },
+            "common.CommonResponse-fullproduct_DomainHealthReport": {
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/fullproduct.DomainHealthReport"
+                    },
+                    "error": {},
+                    "message": {
+                        "type": "string"
+                    },
+                    "requestId": {
+                        "type": "string"
+                    },
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "common.CommonResponse-fullproduct_ListData": {
                 "properties": {
                     "data": {
                         "$ref": "#/components/schemas/fullproduct.ListData"
+                    },
+                    "error": {},
+                    "message": {
+                        "type": "string"
+                    },
+                    "requestId": {
+                        "type": "string"
+                    },
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "common.CommonResponse-fullproduct_TemplateVersion": {
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/fullproduct.TemplateVersion"
+                    },
+                    "error": {},
+                    "message": {
+                        "type": "string"
+                    },
+                    "requestId": {
+                        "type": "string"
+                    },
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "common.CommonResponse-fullproduct_TemplateVersionComparison": {
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/fullproduct.TemplateVersionComparison"
+                    },
+                    "error": {},
+                    "message": {
+                        "type": "string"
+                    },
+                    "requestId": {
+                        "type": "string"
+                    },
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "common.CommonResponse-github_com_openmirai_mirai-clover-api_pkg_dto_v1_fullproduct_DomainHealthPage": {
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/github_com_openmirai_mirai-clover-api_pkg_dto_v1_fullproduct.DomainHealthPage"
                     },
                     "error": {},
                     "message": {
@@ -1067,6 +1178,56 @@
                 ],
                 "type": "object"
             },
+            "domain.DNSProvisionAcceptedResponse": {
+                "properties": {
+                    "dnsRecords": {
+                        "items": {
+                            "$ref": "#/components/schemas/domain.DNSRecordResponse"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "domainId": {
+                        "type": "string"
+                    },
+                    "identityId": {
+                        "type": "string"
+                    },
+                    "nextCheckAt": {
+                        "type": "string"
+                    },
+                    "provider": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "verificationId": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "domain.DNSProvisionOK": {
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/domain.DNSProvisionAcceptedResponse"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "requestId": {
+                        "type": "string"
+                    },
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "domain.DNSRecordResponse": {
                 "properties": {
                     "expectedValues": {
@@ -1288,6 +1449,14 @@
                 },
                 "type": "object"
             },
+            "domain.ProvisionDNSRequest": {
+                "properties": {
+                    "force": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
             "domain.VerifyDomainRequest": {
                 "properties": {
                     "force": {
@@ -1407,6 +1576,50 @@
                 },
                 "type": "object"
             },
+            "email.EmailAttempt": {
+                "properties": {
+                    "attempt_number": {
+                        "type": "integer"
+                    },
+                    "error_code": {
+                        "type": "string"
+                    },
+                    "error_message": {
+                        "type": "string"
+                    },
+                    "finished_at": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "provider": {
+                        "type": "string"
+                    },
+                    "provider_message_id": {
+                        "type": "string"
+                    },
+                    "route_ip_id": {
+                        "type": "string"
+                    },
+                    "route_pool_id": {
+                        "type": "string"
+                    },
+                    "route_provider": {
+                        "type": "string"
+                    },
+                    "route_region": {
+                        "type": "string"
+                    },
+                    "started_at": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "email.EmailBatchAccepted": {
                 "properties": {
                     "data": {
@@ -1442,10 +1655,23 @@
                         "type": "array",
                         "uniqueItems": false
                     },
+                    "attempts": {
+                        "items": {
+                            "$ref": "#/components/schemas/email.EmailAttempt"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
                     "created_at": {
                         "type": "string"
                     },
                     "deliver_by": {
+                        "type": "string"
+                    },
+                    "domain": {
+                        "type": "string"
+                    },
+                    "domain_id": {
                         "type": "string"
                     },
                     "events": {
@@ -1494,6 +1720,18 @@
                     "request_id": {
                         "type": "string"
                     },
+                    "route_ip_id": {
+                        "type": "string"
+                    },
+                    "route_pool_id": {
+                        "type": "string"
+                    },
+                    "route_provider": {
+                        "type": "string"
+                    },
+                    "route_region": {
+                        "type": "string"
+                    },
                     "scheduled_at": {
                         "type": "string"
                     },
@@ -1508,6 +1746,9 @@
                             "type": "string"
                         },
                         "type": "object"
+                    },
+                    "template_id": {
+                        "type": "string"
                     },
                     "text": {
                         "type": "string"
@@ -1598,6 +1839,12 @@
                     "deliver_by": {
                         "type": "string"
                     },
+                    "domain": {
+                        "type": "string"
+                    },
+                    "domain_id": {
+                        "type": "string"
+                    },
                     "from": {
                         "$ref": "#/components/schemas/email.EmailAddress"
                     },
@@ -1610,6 +1857,18 @@
                     "provider_message_id": {
                         "type": "string"
                     },
+                    "route_ip_id": {
+                        "type": "string"
+                    },
+                    "route_pool_id": {
+                        "type": "string"
+                    },
+                    "route_provider": {
+                        "type": "string"
+                    },
+                    "route_region": {
+                        "type": "string"
+                    },
                     "scheduled_at": {
                         "type": "string"
                     },
@@ -1617,6 +1876,9 @@
                         "type": "string"
                     },
                     "subject": {
+                        "type": "string"
+                    },
+                    "template_id": {
                         "type": "string"
                     },
                     "to_count": {
@@ -2277,6 +2539,145 @@
                 },
                 "type": "object"
             },
+            "fullproduct.DomainHealthCheck": {
+                "properties": {
+                    "checked_at": {
+                        "type": "string"
+                    },
+                    "error_code": {
+                        "type": "string"
+                    },
+                    "expectation_id": {
+                        "type": "string"
+                    },
+                    "expected_values": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "observed_values": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "purpose": {
+                        "type": "string"
+                    },
+                    "required": {
+                        "type": "boolean"
+                    },
+                    "severity": {
+                        "enum": [
+                            "info",
+                            "warning",
+                            "critical"
+                        ],
+                        "type": "string"
+                    },
+                    "status": {
+                        "enum": [
+                            "healthy",
+                            "missing",
+                            "mismatch",
+                            "temporary_error",
+                            "permanent_error",
+                            "unknown",
+                            "not_applicable"
+                        ],
+                        "type": "string"
+                    },
+                    "type": {
+                        "enum": [
+                            "TXT",
+                            "CNAME",
+                            "MX",
+                            "TLS",
+                            "PTR"
+                        ],
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "fullproduct.DomainHealthFinding": {
+                "properties": {
+                    "check_id": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "severity": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "fullproduct.DomainHealthReport": {
+                "properties": {
+                    "checked_at": {
+                        "type": "string"
+                    },
+                    "checks": {
+                        "items": {
+                            "$ref": "#/components/schemas/fullproduct.DomainHealthCheck"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "domain_id": {
+                        "type": "string"
+                    },
+                    "domain_name": {
+                        "type": "string"
+                    },
+                    "findings": {
+                        "items": {
+                            "$ref": "#/components/schemas/fullproduct.DomainHealthFinding"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "next_check_at": {
+                        "type": "string"
+                    },
+                    "observation_id": {
+                        "type": "string"
+                    },
+                    "score": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "enum": [
+                            "healthy",
+                            "degraded",
+                            "unhealthy",
+                            "unknown"
+                        ],
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "fullproduct.Envelope": {
                 "properties": {
                     "data": {},
@@ -2337,6 +2738,140 @@
             },
             "fullproduct.MutationBody": {
                 "additionalProperties": {},
+                "type": "object"
+            },
+            "fullproduct.TemplateVersion": {
+                "properties": {
+                    "compiler": {
+                        "type": "string"
+                    },
+                    "compiler_version": {
+                        "type": "string"
+                    },
+                    "component_metadata": {
+                        "additionalProperties": {},
+                        "type": "object"
+                    },
+                    "component_refs": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "derived_from_version": {
+                        "type": "integer"
+                    },
+                    "html": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "number": {
+                        "type": "integer"
+                    },
+                    "preview_data": {
+                        "additionalProperties": {},
+                        "type": "object"
+                    },
+                    "published_at": {
+                        "type": "string"
+                    },
+                    "source_digest": {
+                        "type": "string"
+                    },
+                    "source_format": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "template_id": {
+                        "type": "string"
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "variables": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "fullproduct.TemplateVersionComparison": {
+                "properties": {
+                    "added_variables": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "changed_fields": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "component_metadata_changed": {
+                        "type": "boolean"
+                    },
+                    "from": {
+                        "type": "integer"
+                    },
+                    "preview_data_changed": {
+                        "type": "boolean"
+                    },
+                    "removed_variables": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "rendered_html_changed": {
+                        "type": "boolean"
+                    },
+                    "rendered_text_changed": {
+                        "type": "boolean"
+                    },
+                    "source_digest_changed": {
+                        "type": "boolean"
+                    },
+                    "template_id": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "github_com_openmirai_mirai-clover-api_pkg_dto_v1_fullproduct.DomainHealthPage": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/fullproduct.DomainHealthReport"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "next_cursor": {
+                        "type": "string"
+                    }
+                },
                 "type": "object"
             },
             "health.StatusPayload": {
@@ -2401,6 +2936,527 @@
                         },
                         "type": "array",
                         "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "routing.AuditOK": {
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/routing.AuditResponse"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "requestId": {
+                        "type": "string"
+                    },
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "routing.AuditResponse": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "$ref": "#/components/schemas/routing.TransitionResponse"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "routing.CapabilitiesOK": {
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/routing.CapabilitiesResponse"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "requestId": {
+                        "type": "string"
+                    },
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "routing.CapabilitiesResponse": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "$ref": "#/components/schemas/routing.CapabilityResponse"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "routing.CapabilityResponse": {
+                "properties": {
+                    "dedicatedIpRegions": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "dedicatedIpSupported": {
+                        "type": "boolean"
+                    },
+                    "observedAt": {
+                        "type": "string"
+                    },
+                    "provider": {
+                        "type": "string"
+                    },
+                    "routes": {
+                        "items": {
+                            "$ref": "#/components/schemas/routing.ProviderRouteResponse"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "routing.CreatePoolRequest": {
+                "properties": {
+                    "ips": {
+                        "items": {
+                            "$ref": "#/components/schemas/routing.DedicatedIPRequest"
+                        },
+                        "maxItems": 128,
+                        "minItems": 1,
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "provider": {
+                        "type": "string"
+                    },
+                    "region": {
+                        "type": "string"
+                    },
+                    "residency": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "trafficWeight": {
+                        "type": "integer"
+                    },
+                    "warmup": {
+                        "$ref": "#/components/schemas/routing.WarmupRequest"
+                    }
+                },
+                "required": [
+                    "ips",
+                    "provider",
+                    "region",
+                    "residency",
+                    "warmup"
+                ],
+                "type": "object"
+            },
+            "routing.DedicatedIPRequest": {
+                "properties": {
+                    "address": {
+                        "type": "string"
+                    },
+                    "health": {
+                        "type": "string"
+                    },
+                    "reputation": {
+                        "type": "integer"
+                    },
+                    "state": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "address"
+                ],
+                "type": "object"
+            },
+            "routing.DedicatedIPResponse": {
+                "properties": {
+                    "address": {
+                        "type": "string"
+                    },
+                    "dailySent": {
+                        "type": "integer"
+                    },
+                    "dailySentDate": {
+                        "type": "string"
+                    },
+                    "health": {
+                        "type": "string"
+                    },
+                    "holdReason": {
+                        "type": "string"
+                    },
+                    "holdUntil": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "poolId": {
+                        "type": "string"
+                    },
+                    "reputation": {
+                        "type": "integer"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "routing.DedicatedPoolResponse": {
+                "properties": {
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "health": {
+                        "type": "string"
+                    },
+                    "holdReason": {
+                        "type": "string"
+                    },
+                    "holdUntil": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "ips": {
+                        "items": {
+                            "$ref": "#/components/schemas/routing.DedicatedIPResponse"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "provider": {
+                        "type": "string"
+                    },
+                    "region": {
+                        "type": "string"
+                    },
+                    "residency": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "trafficWeight": {
+                        "type": "integer"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "integer"
+                    },
+                    "warmup": {
+                        "$ref": "#/components/schemas/routing.WarmupResponse"
+                    }
+                },
+                "type": "object"
+            },
+            "routing.IPCommandRequest": {
+                "properties": {
+                    "action": {
+                        "type": "string"
+                    },
+                    "expectedVersion": {
+                        "type": "integer"
+                    },
+                    "reason": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "action"
+                ],
+                "type": "object"
+            },
+            "routing.PolicyOK": {
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/routing.PolicyResponse"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "requestId": {
+                        "type": "string"
+                    },
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "routing.PolicyRequest": {
+                "properties": {
+                    "allowedRegions": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "preferredRegion": {
+                        "type": "string"
+                    },
+                    "requireDedicatedIP": {
+                        "type": "boolean"
+                    },
+                    "requiredResidency": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "routing.PolicyResponse": {
+                "properties": {
+                    "allowedRegions": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "preferredRegion": {
+                        "type": "string"
+                    },
+                    "requireDedicatedIP": {
+                        "type": "boolean"
+                    },
+                    "requiredResidency": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "routing.PoolCommandRequest": {
+                "properties": {
+                    "action": {
+                        "type": "string"
+                    },
+                    "expectedVersion": {
+                        "type": "integer"
+                    },
+                    "holdUntil": {
+                        "type": "string"
+                    },
+                    "reason": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "action"
+                ],
+                "type": "object"
+            },
+            "routing.PoolOK": {
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/routing.DedicatedPoolResponse"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "requestId": {
+                        "type": "string"
+                    },
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "routing.PoolsOK": {
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/routing.PoolsResponse"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "requestId": {
+                        "type": "string"
+                    },
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "routing.PoolsResponse": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "$ref": "#/components/schemas/routing.DedicatedPoolResponse"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    }
+                },
+                "type": "object"
+            },
+            "routing.ProviderRouteResponse": {
+                "properties": {
+                    "available": {
+                        "type": "boolean"
+                    },
+                    "healthy": {
+                        "type": "boolean"
+                    },
+                    "region": {
+                        "type": "string"
+                    },
+                    "residency": {
+                        "type": "string"
+                    },
+                    "trafficClasses": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "uniqueItems": false
+                    },
+                    "weight": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "routing.TransitionOK": {
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/routing.TransitionResponse"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "requestId": {
+                        "type": "string"
+                    },
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "routing.TransitionResponse": {
+                "properties": {
+                    "action": {
+                        "type": "string"
+                    },
+                    "commandId": {
+                        "type": "string"
+                    },
+                    "entityId": {
+                        "type": "string"
+                    },
+                    "entityType": {
+                        "type": "string"
+                    },
+                    "fromState": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "occurredAt": {
+                        "type": "string"
+                    },
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "reason": {
+                        "type": "string"
+                    },
+                    "toState": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "routing.WarmupRequest": {
+                "properties": {
+                    "dailyIncrement": {
+                        "type": "integer"
+                    },
+                    "initialDailyCapacity": {
+                        "type": "integer"
+                    },
+                    "maxDailyCapacity": {
+                        "type": "integer"
+                    },
+                    "startAt": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "initialDailyCapacity",
+                    "maxDailyCapacity",
+                    "startAt"
+                ],
+                "type": "object"
+            },
+            "routing.WarmupResponse": {
+                "properties": {
+                    "dailyIncrement": {
+                        "type": "integer"
+                    },
+                    "initialDailyCapacity": {
+                        "type": "integer"
+                    },
+                    "maxDailyCapacity": {
+                        "type": "integer"
+                    },
+                    "startAt": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -3853,6 +4909,35 @@
         },
         "/api/v1/automation-events": {
             "post": {
+                "parameters": [
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -3969,6 +5054,33 @@
                         "description": "Cursor",
                         "in": "query",
                         "name": "cursor",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
                         "schema": {
                             "type": "string"
                         }
@@ -4160,6 +5272,33 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -4242,6 +5381,156 @@
                 "tags": [
                     "Automations"
                 ]
+            },
+            "patch": {
+                "parameters": [
+                    {
+                        "description": "automation_id",
+                        "in": "path",
+                        "name": "automation_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Idempotency key",
+                        "in": "header",
+                        "name": "Idempotency-Key",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/fullproduct.MutationBody",
+                                        "summary": "request",
+                                        "description": "Automation definition and body scope"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Automation definition and body scope",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/fullproduct.Envelope"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Conflict"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Update Automation Definition",
+                "tags": [
+                    "Automations"
+                ]
             }
         },
         "/api/v1/automations/{automation_id}/activate": {
@@ -4251,6 +5540,33 @@
                         "description": "automation_id",
                         "in": "path",
                         "name": "automation_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -4361,6 +5677,33 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -4463,6 +5806,33 @@
                         "description": "automation_id",
                         "in": "path",
                         "name": "automation_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -4582,6 +5952,33 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -4689,6 +6086,33 @@
                         "description": "Cursor",
                         "in": "query",
                         "name": "cursor",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
                         "schema": {
                             "type": "string"
                         }
@@ -4880,6 +6304,33 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -4971,6 +6422,33 @@
                         "description": "broadcast_id",
                         "in": "path",
                         "name": "broadcast_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -5077,6 +6555,33 @@
                         "description": "broadcast_id",
                         "in": "path",
                         "name": "broadcast_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -5405,6 +6910,33 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -5593,6 +7125,33 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -5682,6 +7241,33 @@
                         "description": "contact_id",
                         "in": "path",
                         "name": "contact_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -6474,6 +8060,7 @@
         },
         "/api/v1/domain-health": {
             "get": {
+                "description": "Lists immutable provider-neutral authentication observations for SPF, DKIM, DMARC, MX, TLS, PTR, and alignment. Unknown and not_applicable checks are returned explicitly and are never treated as healthy.",
                 "parameters": [
                     {
                         "description": "Page",
@@ -6498,6 +8085,32 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "Project ID",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Tenant ID",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -6514,7 +8127,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/common.CommonResponse-fullproduct_ListData"
+                                    "$ref": "#/components/schemas/common.CommonResponse-github_com_openmirai_mirai-clover-api_pkg_dto_v1_fullproduct_DomainHealthPage"
                                 }
                             }
                         },
@@ -6582,6 +8195,35 @@
                 ]
             },
             "post": {
+                "description": "Performs bounded DNS, TLS certificate, reverse-DNS, and authentication policy checks and persists an immutable observation.",
+                "parameters": [
+                    {
+                        "description": "Project ID",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Tenant ID",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -6603,15 +8245,15 @@
                     "required": true
                 },
                 "responses": {
-                    "200": {
+                    "202": {
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fullproduct.Envelope"
+                                    "$ref": "#/components/schemas/common.CommonResponse-fullproduct_DomainHealthReport"
                                 }
                             }
                         },
-                        "description": "OK"
+                        "description": "Accepted"
                     },
                     "400": {
                         "content": {
@@ -6677,12 +8319,39 @@
         },
         "/api/v1/domain-health/{domain_id}": {
             "get": {
+                "description": "Returns the latest immutable provider-neutral authentication observation for a scoped domain.",
                 "parameters": [
                     {
                         "description": "domain_id",
                         "in": "path",
                         "name": "domain_id",
                         "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Project ID",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Tenant ID",
+                        "in": "query",
+                        "name": "tenant_id",
                         "schema": {
                             "type": "string"
                         }
@@ -6702,7 +8371,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/common.CommonResponse-fullproduct_ListData"
+                                    "$ref": "#/components/schemas/common.CommonResponse-fullproduct_DomainHealthReport"
                                 }
                             }
                         },
@@ -7375,6 +9044,132 @@
                 ]
             }
         },
+        "/api/v1/domains/{id}/dns-records/provision": {
+            "post": {
+                "description": "Requests provider-managed domain onboarding and enqueues verification using the exact records returned by the provider.",
+                "parameters": [
+                    {
+                        "description": "Domain ID",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/domain.ProvisionDNSRequest",
+                                        "summary": "body",
+                                        "description": "Provision DNS payload"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Provision DNS payload"
+                },
+                "responses": {
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/domain.DNSProvisionOK"
+                                }
+                            }
+                        },
+                        "description": "Accepted"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Conflict"
+                    },
+                    "502": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Gateway"
+                    },
+                    "503": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Service Unavailable"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Provision provider DNS records",
+                "tags": [
+                    "Domains"
+                ]
+            }
+        },
         "/api/v1/domains/{id}/verify": {
             "post": {
                 "description": "Enqueues DNS verification for a domain.",
@@ -7521,6 +9316,38 @@
                         }
                     },
                     {
+                        "description": "Free-text search across sender, recipient, subject, provider message ID, request ID, tags, and domain",
+                        "in": "query",
+                        "name": "q",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Sender address contains",
+                        "in": "query",
+                        "name": "sender",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Recipient address contains",
+                        "in": "query",
+                        "name": "recipient",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Subject contains",
+                        "in": "query",
+                        "name": "subject",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
                         "description": "Email status",
                         "in": "query",
                         "name": "status",
@@ -7537,6 +9364,14 @@
                         }
                     },
                     {
+                        "description": "Sending domain contains",
+                        "in": "query",
+                        "name": "domain",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
                         "description": "API key ID",
                         "in": "query",
                         "name": "api_key_id",
@@ -7548,6 +9383,78 @@
                         "description": "Request ID",
                         "in": "query",
                         "name": "request_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Provider message ID contains",
+                        "in": "query",
+                        "name": "provider_message_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Tag key or value contains",
+                        "in": "query",
+                        "name": "tag",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Selected route provider contains",
+                        "in": "query",
+                        "name": "route_provider",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Selected route region contains",
+                        "in": "query",
+                        "name": "route_region",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Selected dedicated IP pool ID",
+                        "in": "query",
+                        "name": "route_pool_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Selected dedicated IP ID",
+                        "in": "query",
+                        "name": "route_ip_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Lifecycle template ID",
+                        "in": "query",
+                        "name": "template_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Created after (RFC3339)",
+                        "in": "query",
+                        "name": "created_after",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Created before (RFC3339)",
+                        "in": "query",
+                        "name": "created_before",
                         "schema": {
                             "type": "string"
                         }
@@ -8990,6 +10897,22 @@
                         }
                     },
                     {
+                        "description": "Project ID",
+                        "in": "query",
+                        "name": "project_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Environment",
+                        "in": "query",
+                        "name": "environment",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
                         "description": "Domain ID",
                         "in": "query",
                         "name": "domain_id",
@@ -9872,6 +11795,22 @@
                         }
                     },
                     {
+                        "description": "Project ID",
+                        "in": "query",
+                        "name": "project_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Environment",
+                        "in": "query",
+                        "name": "environment",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
                         "description": "Parse status",
                         "in": "query",
                         "name": "parse_status",
@@ -10422,6 +12361,427 @@
                 ]
             }
         },
+        "/api/v1/routing/audit": {
+            "get": {
+                "parameters": [
+                    {
+                        "description": "Entity type",
+                        "in": "query",
+                        "name": "entityType",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Entity ID",
+                        "in": "query",
+                        "name": "entityId",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/routing.AuditOK"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "List provider routing audit transitions",
+                "tags": [
+                    "Provider routing"
+                ]
+            }
+        },
+        "/api/v1/routing/capabilities": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/routing.CapabilitiesOK"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "List provider routing capabilities",
+                "tags": [
+                    "Provider routing"
+                ]
+            }
+        },
+        "/api/v1/routing/policy": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/routing.PolicyOK"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Get organization routing policy",
+                "tags": [
+                    "Provider routing"
+                ]
+            },
+            "put": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/routing.PolicyRequest",
+                                        "summary": "body",
+                                        "description": "Routing policy"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Routing policy",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/routing.PolicyOK"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Replace organization routing policy",
+                "tags": [
+                    "Provider routing"
+                ]
+            }
+        },
+        "/api/v1/routing/pools": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/routing.PoolsOK"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "List dedicated IP pools",
+                "tags": [
+                    "Provider routing"
+                ]
+            },
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/routing.CreatePoolRequest",
+                                        "summary": "body",
+                                        "description": "Dedicated IP pool"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Dedicated IP pool",
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/routing.PoolOK"
+                                }
+                            }
+                        },
+                        "description": "Created"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Create dedicated IP pool",
+                "tags": [
+                    "Provider routing"
+                ]
+            }
+        },
+        "/api/v1/routing/pools/{id}": {
+            "get": {
+                "parameters": [
+                    {
+                        "description": "Pool ID",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/routing.PoolOK"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Get dedicated IP pool",
+                "tags": [
+                    "Provider routing"
+                ]
+            }
+        },
+        "/api/v1/routing/pools/{id}/command": {
+            "post": {
+                "parameters": [
+                    {
+                        "description": "Pool ID",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/routing.PoolCommandRequest",
+                                        "summary": "body",
+                                        "description": "Pool command"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "Pool command",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/routing.TransitionOK"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Apply dedicated IP pool lifecycle command",
+                "tags": [
+                    "Provider routing"
+                ]
+            }
+        },
+        "/api/v1/routing/pools/{id}/ips/{ip_id}/command": {
+            "post": {
+                "parameters": [
+                    {
+                        "description": "Pool ID",
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "IP ID",
+                        "in": "path",
+                        "name": "ip_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "type": "object"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/routing.IPCommandRequest",
+                                        "summary": "body",
+                                        "description": "IP command"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "description": "IP command",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/routing.TransitionOK"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Apply dedicated IP lifecycle command",
+                "tags": [
+                    "Provider routing"
+                ]
+            }
+        },
         "/api/v1/segments": {
             "get": {
                 "parameters": [
@@ -10445,6 +12805,33 @@
                         "description": "Cursor",
                         "in": "query",
                         "name": "cursor",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
                         "schema": {
                             "type": "string"
                         }
@@ -10636,6 +13023,33 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -10725,6 +13139,33 @@
                         "description": "segment_id",
                         "in": "path",
                         "name": "segment_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -10831,6 +13272,33 @@
                         "description": "segment_id",
                         "in": "path",
                         "name": "segment_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -11494,6 +13962,33 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -11682,6 +14177,33 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -11771,6 +14293,33 @@
                         "description": "template_id",
                         "in": "path",
                         "name": "template_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -11877,6 +14426,33 @@
                         "description": "template_id",
                         "in": "path",
                         "name": "template_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -12001,7 +14577,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/fullproduct.Envelope"
+                                    "$ref": "#/components/schemas/common.CommonResponse-fullproduct_TemplateVersion"
                                 }
                             }
                         },
@@ -12069,6 +14645,146 @@
                 ]
             }
         },
+        "/api/v1/templates/{template_id}/versions/compare": {
+            "get": {
+                "parameters": [
+                    {
+                        "description": "template_id",
+                        "in": "path",
+                        "name": "template_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "version number, UUID, or latest",
+                        "in": "query",
+                        "name": "from",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "version number, UUID, or latest",
+                        "in": "query",
+                        "name": "to",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.CommonResponse-fullproduct_TemplateVersionComparison"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Compare immutable template versions",
+                "tags": [
+                    "Templates"
+                ]
+            }
+        },
         "/api/v1/templates/{template_id}/versions/{version_id}/publish": {
             "post": {
                 "parameters": [
@@ -12085,6 +14801,33 @@
                         "description": "version_id",
                         "in": "path",
                         "name": "version_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -12184,6 +14927,278 @@
                 ]
             }
         },
+        "/api/v1/templates/{template_id}/versions/{version_id}/rollback": {
+            "post": {
+                "parameters": [
+                    {
+                        "description": "template_id",
+                        "in": "path",
+                        "name": "template_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "source published version ID",
+                        "in": "path",
+                        "name": "version_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.CommonResponse-fullproduct_TemplateVersion"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Conflict"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Roll back by republishing a prior immutable version",
+                "tags": [
+                    "Templates"
+                ]
+            }
+        },
+        "/api/v1/templates/{template_id}/versions/{version_ref}": {
+            "get": {
+                "parameters": [
+                    {
+                        "description": "template_id",
+                        "in": "path",
+                        "name": "template_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "version number, UUID, or latest",
+                        "in": "path",
+                        "name": "version_ref",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "tenant_id",
+                        "in": "query",
+                        "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.CommonResponse-fullproduct_TemplateVersion"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/common.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Get a pinned template version",
+                "tags": [
+                    "Templates"
+                ]
+            }
+        },
         "/api/v1/tenants": {
             "get": {
                 "parameters": [
@@ -12207,6 +15222,24 @@
                         "description": "Cursor",
                         "in": "query",
                         "name": "cursor",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
                         "schema": {
                             "type": "string"
                         }
@@ -12398,6 +15431,24 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -12491,6 +15542,24 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -12580,6 +15649,24 @@
                         "description": "tenant_id",
                         "in": "path",
                         "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -12690,6 +15777,24 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -12779,6 +15884,24 @@
                         "description": "tenant_id",
                         "in": "path",
                         "name": "tenant_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "project_id",
+                        "in": "query",
+                        "name": "project_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "environment",
+                        "in": "query",
+                        "name": "environment",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -13122,6 +16245,78 @@
                         "name": "limit",
                         "schema": {
                             "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Webhook endpoint ID",
+                        "in": "query",
+                        "name": "endpoint_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Email ID",
+                        "in": "query",
+                        "name": "email_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Project ID",
+                        "in": "query",
+                        "name": "project_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Environment",
+                        "in": "query",
+                        "name": "environment",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Sending domain ID",
+                        "in": "query",
+                        "name": "domain_id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Delivery status",
+                        "in": "query",
+                        "name": "status",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Event type",
+                        "in": "query",
+                        "name": "event_type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Created after (RFC3339)",
+                        "in": "query",
+                        "name": "created_after",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Created before (RFC3339)",
+                        "in": "query",
+                        "name": "created_before",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],

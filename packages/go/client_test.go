@@ -133,15 +133,15 @@ func TestIdempotencyKeyBoundaries(t *testing.T) {
 	}
 }
 
-func TestSendBatchStripsScheduledAt(t *testing.T) {
+func TestSendBatchPreservesScheduledAt(t *testing.T) {
 	fake := &fakeDoer{responses: []*http.Response{response(202, `{}`)}}
 	client := NewClient("https://api.example.test", "secret")
 	client.HTTPClient = fake
 	if _, _, err := client.SendBatch(context.Background(), []JSON{{"subject": "hello", "scheduled_at": "2030-01-01"}}, "batch-1234"); err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(fake.bodies[0]), "scheduled_at") {
-		t.Fatalf("scheduled_at forwarded: %s", fake.bodies[0])
+	if !strings.Contains(string(fake.bodies[0]), "scheduled_at") {
+		t.Fatalf("scheduled_at was dropped: %s", fake.bodies[0])
 	}
 }
 

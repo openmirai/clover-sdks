@@ -56,6 +56,11 @@ type ResponseMeta struct {
 	RetryAfterSet      bool
 	RateLimitRemaining int
 	Replayed           bool
+	// RawBody retains bounded GET response bytes for forward-compatible
+	// inspection when a server adds fields that this SDK version does not yet
+	// model. Mutation bodies are intentionally not retained because they may
+	// contain one-time API-key or webhook secrets.
+	RawBody []byte
 }
 
 type ErrorDetail struct {
@@ -84,6 +89,17 @@ const DefaultMaxResponseBodyBytes = 4 << 20
 
 var idempotencyKeyPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$`)
 
+// ErrInvalidIdempotencyKey is returned before transport when a mutation does
+// not carry the canonical Clover idempotency key format.
+var ErrInvalidIdempotencyKey = errors.New("idempotency key must match ^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
+
+func ValidateIdempotencyKey(key string) error {
+	if !idempotencyKeyPattern.MatchString(key) {
+		return ErrInvalidIdempotencyKey
+	}
+	return nil
+}
+
 type Client struct {
 	BaseURL              string
 	APIKey               string
@@ -93,6 +109,29 @@ type Client struct {
 	RetryBaseDelay       time.Duration
 	MaxResponseBodyBytes int
 	Sleep                func(context.Context, time.Duration) error
+
+	// Typed resource services. The original flat email methods remain
+	// available for compatibility; new integrations should prefer these
+	// namespaced services.
+	Emails          *EmailsService
+	Domains         *DomainsService
+	DomainHealth    *DomainHealthService
+	Routing         *RoutingService
+	ProviderRouting *RoutingService
+	Templates       *TemplatesService
+	Webhooks        *WebhooksService
+	APIKeys         *APIKeysService
+	Logs            *LogsService
+	Metrics         *MetricsService
+	Inbound         *InboundService
+	ProviderEvents  *ProviderEventsService
+	Suppressions    *SuppressionsService
+	Preferences     *PreferencesService
+	Contacts        *ContactsService
+	Segments        *SegmentsService
+	Broadcasts      *BroadcastsService
+	Automations     *AutomationsService
+	Audit           *AuditService
 }
 
 func NewClient(baseURL, apiKey string) *Client {
@@ -104,7 +143,43 @@ func NewClient(baseURL, apiKey string) *Client {
 	if strings.TrimSpace(apiKey) == "" {
 		panic("apiKey is required")
 	}
-	return &Client{BaseURL: strings.TrimRight(baseURL, "/"), APIKey: apiKey, UserAgent: "clover-sdk-go/0.1.0", HTTPClient: http.DefaultClient, MaxRetries: 2, RetryBaseDelay: 100 * time.Millisecond, MaxResponseBodyBytes: DefaultMaxResponseBodyBytes}
+	return newClient(baseURL, apiKey)
+}
+
+// NewPublicClient creates a client for tokenized public preference-center and
+// one-click unsubscribe routes. It deliberately omits Authorization; use
+// NewClient for any authenticated resource.
+func NewPublicClient(baseURL string) *Client {
+	baseURL = strings.TrimSpace(baseURL)
+	parsed, err := url.Parse(baseURL)
+	if err != nil || parsed.Host == "" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" || (parsed.Scheme != "http" && parsed.Scheme != "https") {
+		panic("baseURL must be an absolute http(s) URL without userinfo/query/fragment")
+	}
+	return newClient(baseURL, "")
+}
+
+func newClient(baseURL, apiKey string) *Client {
+	client := &Client{BaseURL: strings.TrimRight(baseURL, "/"), APIKey: apiKey, UserAgent: "clover-sdk-go/0.1.0", HTTPClient: http.DefaultClient, MaxRetries: 2, RetryBaseDelay: 100 * time.Millisecond, MaxResponseBodyBytes: DefaultMaxResponseBodyBytes}
+	client.Emails = &EmailsService{client: client}
+	client.Domains = &DomainsService{client: client}
+	client.DomainHealth = &DomainHealthService{client: client}
+	client.Routing = &RoutingService{client: client}
+	client.ProviderRouting = client.Routing
+	client.Templates = &TemplatesService{client: client}
+	client.Webhooks = &WebhooksService{client: client}
+	client.APIKeys = &APIKeysService{client: client}
+	client.Logs = &LogsService{client: client}
+	client.Metrics = &MetricsService{client: client}
+	client.Inbound = &InboundService{client: client}
+	client.ProviderEvents = &ProviderEventsService{client: client}
+	client.Suppressions = &SuppressionsService{client: client}
+	client.Preferences = &PreferencesService{client: client}
+	client.Contacts = &ContactsService{client: client}
+	client.Segments = &SegmentsService{client: client}
+	client.Broadcasts = &BroadcastsService{client: client}
+	client.Automations = &AutomationsService{client: client}
+	client.Audit = &AuditService{client: client}
+	return client
 }
 
 func (c *Client) Send(ctx context.Context, request JSON, idempotencyKey string) (JSON, ResponseMeta, error) {
@@ -112,17 +187,10 @@ func (c *Client) Send(ctx context.Context, request JSON, idempotencyKey string) 
 }
 
 func (c *Client) SendBatch(ctx context.Context, items []JSON, idempotencyKey string) (JSON, ResponseMeta, error) {
-	sanitized := make([]JSON, 0, len(items))
-	for _, item := range items {
-		copyItem := JSON{}
-		for key, value := range item {
-			if key != "scheduled_at" {
-				copyItem[key] = value
-			}
-		}
-		sanitized = append(sanitized, copyItem)
-	}
-	return c.request(ctx, http.MethodPost, "/api/v1/emails/batch", JSON{"items": sanitized}, idempotencyKey)
+	// Preserve the caller's payload exactly.  In particular, scheduled_at is
+	// part of the backend batch contract and must be validated by the server;
+	// silently dropping it here made an otherwise invalid request appear valid.
+	return c.request(ctx, http.MethodPost, "/api/v1/emails/batch", JSON{"items": items}, idempotencyKey)
 }
 
 func (c *Client) Schedule(ctx context.Context, id, scheduledAt, idempotencyKey string) (JSON, ResponseMeta, error) {
@@ -146,15 +214,38 @@ func (c *Client) List(ctx context.Context, query url.Values) (JSON, ResponseMeta
 }
 
 func (c *Client) request(ctx context.Context, method, path string, payload JSON, idempotencyKey string) (JSON, ResponseMeta, error) {
-	if method != http.MethodGet && !idempotencyKeyPattern.MatchString(idempotencyKey) {
-		return nil, ResponseMeta{}, errors.New("idempotency key must match ^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
+	var result JSON
+	meta, err := requestTyped(c, ctx, method, path, payload, idempotencyKey, &result)
+	return result, meta, err
+}
+
+// requestTyped performs one API request and decodes the CommonResponse data
+// member into result. The function deliberately lives outside Client because
+// Go does not permit methods with their own type parameters. Resource services
+// use it to retain a typed API without introducing a third-party transport.
+func requestTyped[T any](c *Client, ctx context.Context, method, path string, payload any, idempotencyKey string, result *T) (ResponseMeta, error) {
+	return requestTypedWithPolicy(c, ctx, method, path, payload, idempotencyKey, result, method == http.MethodGet)
+}
+
+// requestTypedWithoutIdempotency is used only for side-effect-free POST
+// endpoints such as segment evaluation. The backend does not put an
+// idempotency middleware in front of those operations.
+func requestTypedWithoutIdempotency[T any](c *Client, ctx context.Context, method, path string, payload any, result *T) (ResponseMeta, error) {
+	return requestTypedWithPolicy(c, ctx, method, path, payload, "", result, true)
+}
+
+func requestTypedWithPolicy[T any](c *Client, ctx context.Context, method, path string, payload any, idempotencyKey string, result *T, allowMissingIdempotency bool) (ResponseMeta, error) {
+	if !allowMissingIdempotency {
+		if err := ValidateIdempotencyKey(idempotencyKey); err != nil {
+			return ResponseMeta{}, err
+		}
 	}
 	body, err := json.Marshal(payload)
 	if payload == nil {
 		body = nil
 	}
 	if err != nil {
-		return nil, ResponseMeta{}, err
+		return ResponseMeta{}, err
 	}
 	safe := method == http.MethodGet || idempotencyKey != ""
 	maxRetries := c.MaxRetries
@@ -167,10 +258,12 @@ func (c *Client) request(ctx context.Context, method, path string, payload JSON,
 	for attempt := 0; ; attempt++ {
 		req, err := http.NewRequestWithContext(ctx, method, c.BaseURL+path, bytes.NewReader(body))
 		if err != nil {
-			return nil, ResponseMeta{}, err
+			return ResponseMeta{}, err
 		}
 		req.Header.Set("Accept", "application/json")
-		req.Header.Set("Authorization", "Bearer "+c.APIKey)
+		if c.APIKey != "" {
+			req.Header.Set("Authorization", "Bearer "+c.APIKey)
+		}
 		req.Header.Set("User-Agent", c.UserAgent)
 		req.Header.Set("X-Request-ID", "req_"+strconv.FormatInt(time.Now().UnixNano(), 36)+strconv.Itoa(attempt))
 		if payload != nil {
@@ -185,7 +278,7 @@ func (c *Client) request(ctx context.Context, method, path string, payload JSON,
 		}
 		response, err := client.Do(req)
 		if err != nil {
-			return nil, ResponseMeta{}, err
+			return ResponseMeta{}, err
 		}
 		maxResponseBodyBytes := c.MaxResponseBodyBytes
 		if maxResponseBodyBytes <= 0 {
@@ -194,32 +287,49 @@ func (c *Client) request(ctx context.Context, method, path string, payload JSON,
 		data, readErr := io.ReadAll(io.LimitReader(response.Body, int64(maxResponseBodyBytes)+1))
 		response.Body.Close()
 		if readErr != nil {
-			return nil, ResponseMeta{}, readErr
+			return ResponseMeta{}, readErr
 		}
 		meta := responseMeta(response.Header)
+		// RawBody exists to let callers inspect additive fields on safe read
+		// responses.  Do not retain successful mutation bodies: API-key and
+		// webhook creation responses can contain one-time secrets.
+		if method == http.MethodGet {
+			meta.RawBody = append([]byte(nil), data...)
+		}
 		if len(data) > maxResponseBodyBytes {
-			return nil, meta, &Error{Status: response.StatusCode, Meta: meta, Message: "Clover response body exceeds the configured limit"}
+			return meta, &Error{Status: response.StatusCode, Meta: meta, Message: "Clover response body exceeds the configured limit"}
 		}
 		if response.StatusCode >= 200 && response.StatusCode < 300 {
-			var result JSON
-			if len(data) > 0 {
-				if err := json.Unmarshal(data, &result); err != nil {
-					return nil, meta, err
-				}
+			if len(data) == 0 || result == nil {
+				return meta, nil
 			}
-			if success, ok := result["success"].(bool); ok {
-				if !success {
-					return nil, meta, decodeAPIError(response.StatusCode, data, meta)
-				}
-				if requestID, ok := result["requestId"].(string); ok && meta.RequestID == "" {
-					meta.RequestID = requestID
-				}
-				if payload, ok := result["data"].(map[string]any); ok {
-					return JSON(payload), meta, nil
-				}
-				return JSON{}, meta, nil
+			var envelope struct {
+				Success   *bool           `json:"success"`
+				Data      json.RawMessage `json:"data"`
+				RequestID string          `json:"requestId"`
 			}
-			return result, meta, nil
+			if err := json.Unmarshal(data, &envelope); err != nil {
+				return meta, err
+			}
+			if envelope.Success != nil {
+				if !*envelope.Success {
+					return meta, decodeAPIError(response.StatusCode, data, meta)
+				}
+				if meta.RequestID == "" {
+					meta.RequestID = envelope.RequestID
+				}
+				if len(envelope.Data) == 0 || string(envelope.Data) == "null" {
+					return meta, nil
+				}
+				if err := json.Unmarshal(envelope.Data, result); err != nil {
+					return meta, err
+				}
+				return meta, nil
+			}
+			if err := json.Unmarshal(data, result); err != nil {
+				return meta, err
+			}
+			return meta, nil
 		}
 		if safe && isRetryable(response.StatusCode) && attempt < maxRetries {
 			delay := meta.RetryAfter
@@ -240,11 +350,11 @@ func (c *Client) request(ctx context.Context, method, path string, payload JSON,
 				}
 			}
 			if err := sleep(ctx, delay); err != nil {
-				return nil, meta, err
+				return meta, err
 			}
 			continue
 		}
-		return nil, meta, decodeAPIError(response.StatusCode, data, meta)
+		return meta, decodeAPIError(response.StatusCode, data, meta)
 	}
 }
 
