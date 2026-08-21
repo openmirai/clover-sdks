@@ -10,7 +10,7 @@
   <properties>
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <junit.version>5.11.4</junit.version>
+    <junit.version>5.14.4</junit.version>
   </properties>
   <url>https://github.com/openmirai/clover-sdks/tree/main/packages/java</url>
   <licenses><license><name>MIT License</name><url>https://opensource.org/license/mit</url></license></licenses>
@@ -43,7 +43,7 @@
         <configuration><configLocation>checkstyle.xml</configLocation><includeTestSourceDirectory>true</includeTestSourceDirectory></configuration>
       </plugin>
       <plugin>
-        <groupId>com.github.spotbugs</groupId><artifactId>spotbugs-maven-plugin</artifactId><version>4.9.7.0</version>
+        <groupId>com.github.spotbugs</groupId><artifactId>spotbugs-maven-plugin</artifactId><version>4.10.4.0</version>
         <executions><execution><id>spotbugs</id><phase>verify</phase><goals><goal>check</goal></goals></execution></executions>
       </plugin>
       <plugin>
@@ -61,11 +61,11 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId><artifactId>maven-gpg-plugin</artifactId><version>3.2.7</version>
+            <groupId>org.apache.maven.plugins</groupId><artifactId>maven-gpg-plugin</artifactId><version>3.2.8</version>
             <executions><execution><id>sign-artifacts</id><phase>verify</phase><goals><goal>sign</goal></goals></execution></executions>
           </plugin>
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId><version>3.11.2</version>
+            <groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId><version>3.12.0</version>
             <executions><execution><id>attach-javadocs</id><phase>package</phase><goals><goal>jar</goal></goals></execution></executions>
           </plugin>
           <plugin>

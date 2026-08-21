@@ -15,7 +15,7 @@ jobs:
       SWIFTLINT_REF: 0.57.0
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Validate semantic-version tag
         env:
           TAG: ${{ github.ref_name }}
@@ -41,7 +41,7 @@ jobs:
       - run: swift test
       - run: swift-format lint --strict --configuration .swift-format packages/swift/Sources packages/swift/Tests
       - run: swiftlint lint --strict --no-cache --config .swiftlint.yml packages/swift/Sources packages/swift/Tests
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true
           body_path: packages/swift/CHANGELOG.md

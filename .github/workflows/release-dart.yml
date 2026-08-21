@@ -16,7 +16,7 @@ jobs:
       run:
         working-directory: packages/dart
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Validate SemVer tag
         run: |
           [[ "$GITHUB_REF_NAME" =~ ^dart/v[0-9]+\.[0-9]+\.[0-9]+$ ]]

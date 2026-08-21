@@ -14,7 +14,7 @@ jobs:
       run:
         working-directory: packages/rust
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
       - name: Validate SemVer tag
         run: |
@@ -29,7 +29,7 @@ jobs:
       - run: cargo fmt --all --check
       - run: cargo test --all-targets --all-features
       - run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true
           body_path: packages/rust/CHANGELOG.md
