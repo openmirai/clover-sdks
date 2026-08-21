@@ -1,6 +1,8 @@
-.PHONY: check check-layout check-typescript check-python check-go check-java check-rust check-swift check-dart check-cli
+.PHONY: check check-all check-layout check-typescript check-python check-go check-java check-rust check-swift check-dart check-cli
 
-check: check-layout check-typescript check-python check-go check-java check-rust check-swift check-dart check-cli
+check: check-layout check-go check-cli
+
+check-all: check check-typescript check-python check-java check-rust check-swift check-dart
 
 check-layout:
 	python3 scripts/check_repository.py

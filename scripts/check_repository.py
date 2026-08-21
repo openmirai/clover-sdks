@@ -4,6 +4,18 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+IGNORED_TREE_PARTS = {
+    ".dart_tool",
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "build",
+    "dist",
+    "node_modules",
+    "target",
+}
 
 REQUIRED = (
     "Package.swift",
@@ -26,6 +38,7 @@ nested_workflows = [
     path.relative_to(ROOT)
     for path in ROOT.glob("**/.github/workflows/*")
     if path.parent.parent.parent != ROOT
+    and not IGNORED_TREE_PARTS.intersection(path.relative_to(ROOT).parts)
 ]
 if nested_workflows:
     raise SystemExit(f"nested GitHub workflows are not active: {nested_workflows}")
@@ -36,14 +49,15 @@ legacy_prefixes = (
     "github.com/openmirai/" + "clover-cli",
 )
 for path in ROOT.rglob("*"):
-    if not path.is_file() or ".git" in path.parts:
+    relative = path.relative_to(ROOT)
+    if not path.is_file() or IGNORED_TREE_PARTS.intersection(relative.parts):
         continue
     try:
         content = path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
         continue
     if any(prefix in content for prefix in legacy_prefixes):
-        legacy_repositories.append(path.relative_to(ROOT))
+        legacy_repositories.append(relative)
 
 if legacy_repositories:
     raise SystemExit(f"standalone repository references remain: {legacy_repositories}")

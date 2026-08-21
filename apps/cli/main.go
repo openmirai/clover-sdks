@@ -18,7 +18,10 @@ func main() {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: clover-cli <send|send-batch|schedule|get|list|cancel|stream>")
+		return fmt.Errorf("usage: clover-cli <send|send-batch|schedule|get|list|cancel|dev>")
+	}
+	if args[0] == "dev" || args[0] == "stream" {
+		return runDev(args[1:])
 	}
 	baseURL := os.Getenv("CLOVER_BASE_URL")
 	apiKey := os.Getenv("CLOVER_API_KEY")
@@ -117,12 +120,6 @@ func run(args []string) error {
 			return err
 		}
 		return printJSON(result)
-	case "stream":
-		path := "/v1/events/stream"
-		if len(args) == 2 {
-			path = args[1]
-		}
-		return client.StreamEvents(ctx, path, func(event json.RawMessage) error { return printJSON(event) })
 	default:
 		return fmt.Errorf("unknown command %q", args[0])
 	}
