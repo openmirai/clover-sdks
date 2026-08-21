@@ -2,13 +2,20 @@
   "name": "@clover/sdk",
   "version": "0.1.0",
   "description": "Official TypeScript client for the Clover email API",
-  "keywords": ["clover", "email", "api", "sdk"],
+  "keywords": [
+    "clover",
+    "email",
+    "api",
+    "sdk"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/openmirai/clover-sdks.git",
     "directory": "packages/typescript"
   },
-  "bugs": { "url": "https://github.com/openmirai/clover-sdks/issues" },
+  "bugs": {
+    "url": "https://github.com/openmirai/clover-sdks/issues"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,6 +23,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./resend": {
+      "types": "./dist/resend/index.d.ts",
+      "import": "./dist/resend/index.js"
     },
     "./nestjs": {
       "types": "./dist/integrations/nestjs.d.ts",
@@ -26,13 +37,20 @@
       "import": "./dist/integrations/chat.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE", "CHANGELOG.md"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "npm run build && vitest run",
     "test:coverage": "npm run build && vitest run --coverage",
+    "test:e2e:live": "npm run build && CLOVER_LIVE_E2E=1 vitest run test/e2e.live.test.ts",
+    "e2e:bootstrap": "node scripts/live-e2e-bootstrap.mjs",
     "lint": "oxlint src test",
     "format": "oxfmt src test",
     "format:check": "oxfmt --check src test",
@@ -40,26 +58,37 @@
     "release": "release-it"
   },
   "license": "MIT",
-  "engines": { "node": ">=20" },
-  "publishConfig": { "access": "public" },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "peerDependencies": {
     "@nestjs/common": "^10.0.0 || ^11.0.0",
     "chat": ">=4"
   },
   "peerDependenciesMeta": {
-    "@nestjs/common": { "optional": true },
-    "chat": { "optional": true }
+    "@nestjs/common": {
+      "optional": true
+    },
+    "chat": {
+      "optional": true
+    }
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^2.1.9",
-    "lint-staged": "^15.2.10",
-    "oxfmt": "^0.15.0",
-    "oxlint": "^0.15.0",
-    "release-it": "^18.1.2",
-    "typescript": "^5.7.3",
-    "vitest": "^2.1.9"
+    "@vitest/coverage-v8": "^4.1.10",
+    "lint-staged": "^17.3.0",
+    "oxfmt": "^0.63.0",
+    "oxlint": "^1.78.0",
+    "release-it": "^21.0.2",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   },
   "lint-staged": {
-    "*.{ts,mjs}": ["oxlint --fix", "oxfmt"]
+    "*.{ts,mjs}": [
+      "oxlint --fix",
+      "oxfmt"
+    ]
   }
 }

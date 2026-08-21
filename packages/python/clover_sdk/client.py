@@ -12,8 +12,10 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from contextlib import suppress
 from dataclasses import dataclass, field
-from typing import Any, Callable, Mapping, MutableMapping, Sequence
+from typing import Any
 
 Problem = dict[str, Any]
 IDEMPOTENCY_KEY = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9._:-]{7,127}\Z")
@@ -30,7 +32,13 @@ class HttpResponse:
 class CloverError(RuntimeError):
     """A non-2xx response, with a decoded problem document when available."""
 
-    def __init__(self, status: int, message: str, problem: Problem | None = None, metadata: Mapping[str, Any] | None = None):
+    def __init__(
+        self,
+        status: int,
+        message: str,
+        problem: Problem | None = None,
+        metadata: Mapping[str, Any] | None = None,
+    ):
         super().__init__(message)
         self.status = status
         self.problem = problem
@@ -95,13 +103,29 @@ class CloverClient:
 
     RETRYABLE = frozenset({408, 425, 429, 500, 502, 503, 504})
 
-    def __init__(self, base_url: str, api_key: str, *, user_agent: str = "clover-sdk-python/0.1.0",
-                 max_retries: int = 2, retry_base_delay: float = 0.1, timeout: float = 30.0,
-                 max_response_body_bytes: int = DEFAULT_MAX_RESPONSE_BODY_BYTES,
-                 transport: Transport | None = None, sleep: Callable[[float], None] = time.sleep):
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        *,
+        user_agent: str = "clover-sdk-python/0.1.0",
+        max_retries: int = 2,
+        retry_base_delay: float = 0.1,
+        timeout: float = 30.0,
+        max_response_body_bytes: int = DEFAULT_MAX_RESPONSE_BODY_BYTES,
+        transport: Transport | None = None,
+        sleep: Callable[[float], None] = time.sleep,
+    ):
         candidate = base_url.strip()
         parsed = urllib.parse.urlsplit(candidate)
-        if parsed.scheme not in {"http", "https"} or not parsed.netloc or parsed.username or parsed.password or parsed.query or parsed.fragment:
+        if (
+            parsed.scheme not in {"http", "https"}
+            or not parsed.netloc
+            or parsed.username
+            or parsed.password
+            or parsed.query
+            or parsed.fragment
+        ):
             raise ValueError("base_url must be an absolute http(s) URL without userinfo/query/fragment")
         if not api_key.strip():
             raise ValueError("api_key is required")
@@ -126,23 +150,34 @@ class CloverClient:
         self.last_metadata: dict[str, Any] = {}
 
     def send(self, request: Mapping[str, Any], idempotency_key: str) -> dict[str, Any]:
-        return self._request("POST", "/v1/emails", request, idempotency_key)
+        return self._request("POST", "/api/v1/emails", request, idempotency_key)
 
     def send_batch(self, items: Sequence[Mapping[str, Any]], idempotency_key: str) -> dict[str, Any]:
         sanitized = [{key: value for key, value in item.items() if key != "scheduled_at"} for item in items]
-        return self._request("POST", "/v1/emails/batch", {"items": sanitized}, idempotency_key)
+        return self._request("POST", "/api/v1/emails/batch", {"items": sanitized}, idempotency_key)
 
     def schedule(self, email_id: str, scheduled_at: str, idempotency_key: str) -> dict[str, Any]:
-        return self._request("POST", f"/v1/emails/{self._path_segment(email_id)}/schedule", {"scheduled_at": scheduled_at}, idempotency_key)
+        return self._request(
+            "POST",
+            f"/api/v1/emails/{self._path_segment(email_id)}/schedule",
+            {"scheduled_at": scheduled_at},
+            idempotency_key,
+        )
 
     def cancel(self, email_id: str, idempotency_key: str) -> dict[str, Any]:
-        return self._request("POST", f"/v1/emails/{self._path_segment(email_id)}/cancel", None, idempotency_key)
+        return self._request("POST", f"/api/v1/emails/{self._path_segment(email_id)}/cancel", None, idempotency_key)
 
     def get(self, email_id: str) -> dict[str, Any]:
-        return self._request("GET", f"/v1/emails/{self._path_segment(email_id)}")
+        return self._request("GET", f"/api/v1/emails/{self._path_segment(email_id)}")
 
-    def list(self, *, cursor: str | None = None, limit: int | None = None, status: str | None = None,
-             **filters: str | int) -> dict[str, Any]:
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        status: str | None = None,
+        **filters: str | int,
+    ) -> dict[str, Any]:
         params: dict[str, str] = {key: str(value) for key, value in filters.items()}
         if cursor is not None:
             params["cursor"] = cursor
@@ -150,17 +185,25 @@ class CloverClient:
             params["limit"] = str(limit)
         if status is not None:
             params["status"] = status
-        query = "&".join(f"{urllib.parse.quote(k, safe='')}={urllib.parse.quote(v, safe='')}" for k, v in params.items())
-        return self._request("GET", "/v1/emails" + (f"?{query}" if query else ""))
+        query = "&".join(
+            f"{urllib.parse.quote(k, safe='')}={urllib.parse.quote(v, safe='')}" for k, v in params.items()
+        )
+        return self._request("GET", "/api/v1/emails" + (f"?{query}" if query else ""))
 
-    def _request(self, method: str, path: str, payload: Mapping[str, Any] | None = None,
-                 idempotency_key: str | None = None) -> dict[str, Any]:
+    def _request(
+        self,
+        method: str,
+        path: str,
+        payload: Mapping[str, Any] | None = None,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
         if method != "GET" and (not idempotency_key or not IDEMPOTENCY_KEY.fullmatch(idempotency_key)):
             raise ValueError("idempotency_key must match ^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
         headers: MutableMapping[str, str] = {
-            "Accept": "application/json, application/problem+json",
+            "Accept": "application/json",
             "Authorization": f"Bearer {self.api_key}",
             "User-Agent": self.user_agent,
+            "X-Request-ID": f"req_{int(time.time() * 1000):x}ab12cd34",
         }
         body: bytes | None = None
         if payload is not None:
@@ -186,15 +229,33 @@ class CloverClient:
                 )
             decoded = self._decode(response.body)
             if 200 <= response.status < 300:
+                if isinstance(decoded, dict) and isinstance(decoded.get("success"), bool):
+                    if not decoded["success"]:
+                        raise self._raise_error(response.status, decoded)
+                    if isinstance(decoded.get("requestId"), str) and not self.last_metadata.get("request_id"):
+                        self.last_metadata["request_id"] = decoded["requestId"]
+                    data = decoded.get("data")
+                    return data if isinstance(data, dict) else {}
                 return decoded
             if safe and response.status in self.RETRYABLE and attempt < self.max_retries:
                 delay = self.last_metadata.get("retry_after")
-                self.sleep(float(delay) if delay is not None else self.retry_base_delay * (2 ** attempt))
+                self.sleep(float(delay) if delay is not None else self.retry_base_delay * (2**attempt))
                 attempt += 1
                 continue
-            problem = decoded if self._is_problem(decoded) else None
-            message = str(problem.get("title")) if problem else f"Clover request failed ({response.status})"
-            raise CloverError(response.status, message, problem, self.last_metadata)
+            raise self._raise_error(response.status, decoded)
+
+    def _raise_error(self, status: int, decoded: dict[str, Any]) -> CloverError:
+        if (
+            isinstance(decoded.get("success"), bool)
+            and decoded.get("success") is False
+            and isinstance(decoded.get("error"), Mapping)
+        ):
+            detail = dict(decoded["error"])
+            message = str(detail.get("message") or f"Clover request failed ({status})")
+            return CloverError(status, message, detail, self.last_metadata)
+        problem = decoded if self._is_problem(decoded) else None
+        message = str(problem.get("title")) if problem else f"Clover request failed ({status})"
+        return CloverError(status, message, problem, self.last_metadata)
 
     @staticmethod
     def _path_segment(value: str) -> str:
@@ -224,10 +285,8 @@ class CloverClient:
             "replayed": (lowered.get("idempotency-replayed") or "").lower() == "true",
             "rate_limit_remaining": None,
         }
-        try:
+        with suppress(KeyError, ValueError):
             result["rate_limit_remaining"] = int(lowered["x-ratelimit-remaining"])
-        except (KeyError, ValueError):
-            pass
         try:
             retry = int(lowered["retry-after"])
             if retry >= 0:

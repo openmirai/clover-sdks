@@ -57,7 +57,7 @@ func NewClient(baseURL, apiKey string) *Client {
 	return &Client{BaseURL: strings.TrimRight(baseURL, "/"), APIKey: apiKey, UserAgent: "clover-cli/0.1.0", HTTPClient: http.DefaultClient, MaxRetries: 2, RetryBaseDelay: 100 * time.Millisecond, MaxResponseBodyBytes: DefaultMaxResponseBodyBytes}
 }
 func (c *Client) Send(ctx context.Context, payload map[string]any, key string) (json.RawMessage, ResponseMeta, error) {
-	return c.request(ctx, "POST", "/v1/emails", payload, key)
+	return c.request(ctx, "POST", "/api/v1/emails", payload, key)
 }
 func (c *Client) SendBatch(ctx context.Context, items []map[string]any, key string) (json.RawMessage, ResponseMeta, error) {
 	sanitized := make([]map[string]any, 0, len(items))
@@ -70,23 +70,23 @@ func (c *Client) SendBatch(ctx context.Context, items []map[string]any, key stri
 		}
 		sanitized = append(sanitized, copyItem)
 	}
-	return c.request(ctx, "POST", "/v1/emails/batch", map[string]any{"items": sanitized}, key)
+	return c.request(ctx, "POST", "/api/v1/emails/batch", map[string]any{"items": sanitized}, key)
 }
 func (c *Client) Schedule(ctx context.Context, id, scheduledAt, key string) (json.RawMessage, ResponseMeta, error) {
-	return c.request(ctx, "POST", "/v1/emails/"+url.PathEscape(id)+"/schedule", map[string]any{"scheduled_at": scheduledAt}, key)
+	return c.request(ctx, "POST", "/api/v1/emails/"+url.PathEscape(id)+"/schedule", map[string]any{"scheduled_at": scheduledAt}, key)
 }
 func (c *Client) Get(ctx context.Context, id string) (json.RawMessage, ResponseMeta, error) {
-	return c.request(ctx, "GET", "/v1/emails/"+url.PathEscape(id), nil, "")
+	return c.request(ctx, "GET", "/api/v1/emails/"+url.PathEscape(id), nil, "")
 }
 func (c *Client) List(ctx context.Context, query url.Values) (json.RawMessage, ResponseMeta, error) {
-	path := "/v1/emails"
+	path := "/api/v1/emails"
 	if encoded := query.Encode(); encoded != "" {
 		path += "?" + encoded
 	}
 	return c.request(ctx, "GET", path, nil, "")
 }
 func (c *Client) Cancel(ctx context.Context, id, key string) (json.RawMessage, ResponseMeta, error) {
-	return c.request(ctx, "POST", "/v1/emails/"+url.PathEscape(id)+"/cancel", nil, key)
+	return c.request(ctx, "POST", "/api/v1/emails/"+url.PathEscape(id)+"/cancel", nil, key)
 }
 
 func (c *Client) StreamEvents(ctx context.Context, path string, onEvent func(json.RawMessage) error) error {
@@ -214,7 +214,11 @@ func (c *Client) request(ctx context.Context, method, path string, payload map[s
 			return nil, meta, &APIError{Status: response.StatusCode, Metadata: meta, Message: "Clover response body exceeds the configured limit"}
 		}
 		if response.StatusCode >= 200 && response.StatusCode < 300 {
-			return bytesBody, meta, nil
+			unwrapped, err := unwrapEnvelope(bytesBody)
+			if err != nil {
+				return nil, meta, err
+			}
+			return unwrapped, meta, nil
 		}
 		if safe && retryable(response.StatusCode) && attempt < maxRetries {
 			delay := meta.RetryAfter
@@ -239,14 +243,44 @@ func (c *Client) request(ctx context.Context, method, path string, payload map[s
 			}
 			continue
 		}
-		var problem Problem
-		_ = json.Unmarshal(bytesBody, &problem)
+		var envelope struct {
+			Success bool           `json:"success"`
+			Error   map[string]any `json:"error"`
+		}
 		message := fmt.Sprintf("Clover request failed (%d)", response.StatusCode)
-		if title, ok := problem["title"].(string); ok {
-			message = title
+		var problem Problem
+		if json.Unmarshal(bytesBody, &envelope) == nil && envelope.Error != nil {
+			if msg, ok := envelope.Error["message"].(string); ok {
+				message = msg
+			}
+			problem = envelope.Error
+		} else {
+			_ = json.Unmarshal(bytesBody, &problem)
+			if title, ok := problem["title"].(string); ok {
+				message = title
+			}
 		}
 		return nil, meta, &APIError{Status: response.StatusCode, Problem: problem, Metadata: meta, Message: message}
 	}
+}
+
+func unwrapEnvelope(body []byte) ([]byte, error) {
+	var envelope map[string]any
+	if err := json.Unmarshal(body, &envelope); err != nil {
+		return body, nil
+	}
+	success, ok := envelope["success"].(bool)
+	if !ok {
+		return body, nil
+	}
+	if !success {
+		return body, nil
+	}
+	data, ok := envelope["data"]
+	if !ok || data == nil {
+		return []byte("{}"), nil
+	}
+	return json.Marshal(data)
 }
 
 func (c *Client) maxResponseBodyBytes() int {

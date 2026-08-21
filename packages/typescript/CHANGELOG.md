@@ -6,4 +6,12 @@ signed `v*` tag.
 
 ## Unreleased
 
+- Adopt Clover V2 transport (`/api/v1`, `CommonResponse` unwrap, `ErrorResponse`).
+- Add native `domains`, `apiKeys`, and `webhooks` resource namespaces.
+- Add Resend drop-in export `@clover/sdk/resend` with Result-style responses.
+- Add opt-in live Compose E2E (`CLOVER_LIVE_E2E=1`).
+- Auto-send `X-Request-ID` values compatible with Clover DB constraints.
+
+## 0.1.0
+
 - Initial public SDK hardening baseline.

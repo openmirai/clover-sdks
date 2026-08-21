@@ -1,42 +1,111 @@
 # `@clover/sdk`
 
-Small, dependency-free TypeScript client for the Clover API. It uses the
-platform `fetch` implementation, sends bearer authentication and a
-`User-Agent`, and requires an `Idempotency-Key` for every mutation.
+Official TypeScript client for the Clover V2 API (`/api/v1` + `CommonResponse`).
+
+## Install
+
+```sh
+npm install @clover/sdk
+```
+
+## Native client (Clover-shaped)
 
 ```ts
 import { CloverClient } from "@clover/sdk";
-const clover = new CloverClient({ baseUrl: "https://api.example.com", apiKey: process.env.CLOVER_API_KEY! });
-const accepted = await clover.send({
-  from: { address: "sender@example.com" }, to: [{ address: "user@example.com" }],
-  subject: "Hello", text: "Sent asynchronously",
-}, "order-1234");
+
+const clover = new CloverClient({
+  baseUrl: "http://127.0.0.1:8080", // API origin only; paths use /api/v1
+  apiKey: process.env.CLOVER_API_KEY!,
+});
+
+const accepted = await clover.emails.send(
+  {
+    from: { address: "sender@example.com" },
+    to: [{ address: "user@example.com" }],
+    subject: "Hello",
+    text: "Sent asynchronously",
+  },
+  { idempotencyKey: "order-1234" },
+);
+
+await clover.domains.list();
+await clover.apiKeys.list();
+await clover.webhooks.list();
 ```
 
-`send`, `sendBatch`, `schedule`, `cancel`, `get`, and cursor-aware `list` are
-provided. `CloverError.problem` retains unknown problem members. GET requests,
-and idempotent mutations, retry at most three times for transient statuses;
-`Retry-After` is honored when present. Inject `fetch` and `sleep` for tests.
+Legacy flat helpers (`send`, `sendBatch`, `schedule`, `cancel`, `get`, `list`)
+still work and delegate to `emails.*`.
 
-Run the deterministic offline checks with `npm test`, `npm run lint`, and
-`npm run format:check`. Development uses Vitest and the Oxc toolchain
-(oxlint/oxfmt); `npm run test:coverage` writes a local coverage report.
+## Resend drop-in
 
-Releases are made from signed `typescript/v*` tags by `release-it`; see
-[`RELEASING.md`](RELEASING.md). Contributions and vulnerability reports are
-covered by [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`SECURITY.md`](SECURITY.md).
+For apps that already use the Resend Node SDK:
+
+```ts
+import { Resend } from "@clover/sdk/resend";
+
+const resend = new Resend(process.env.CLOVER_API_KEY, {
+  baseUrl: "http://127.0.0.1:8080",
+});
+
+const { data, error } = await resend.emails.send({
+  from: "Acme <sender@example.com>",
+  to: "user@example.com",
+  subject: "Hello",
+  html: "<p>Hi</p>",
+  tags: [{ name: "campaign", value: "welcome" }],
+});
+```
+
+Supported namespaces: `emails`, `batch`, `domains`, `apiKeys`, `webhooks`.
+String addresses, tag arrays, batch arrays, Result-style `{ data, error }`, and
+auto `Idempotency-Key` match Resend ergonomics. `emails.update({ id, scheduledAt })`
+maps to Clover `POST /api/v1/emails/{id}/schedule`.
+
+Tenants, incidents, and other full-product APIs stay on the native client only.
+
+## Transport notes
+
+- Paths are always `/api/v1/...`
+- Success bodies unwrap `CommonResponse.data`
+- Errors use V2 `ErrorResponse` (not `problem+json`)
+- Mutations require an idempotency key matching
+  `^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$` (Resend façade auto-generates)
+- Clients send `X-Request-ID` values matching `^req_[A-Za-z0-9_-]{8,128}$`
+
+## Tests
+
+```sh
+npm test                 # offline unit/conformance
+npm run lint
+npm run format:check
+```
+
+### Live E2E (opt-in)
+
+Requires the Clover Compose stack (Postgres, Redis, Mailpit, MinIO), migrations,
+API, and worker. From the clover repo:
+
+```sh
+make up
+make migrate
+make api      # separate terminal
+make worker   # separate terminal
+```
+
+Then from `packages/typescript`:
+
+```sh
+node scripts/live-e2e-bootstrap.mjs
+CLOVER_LIVE_E2E=1 npx vitest run test/e2e.live.test.ts
+```
+
+Set `CLOVER_ROOT` if the clover checkout is not a sibling of `clover-sdks`.
+Default CI stays offline; live E2E only runs when `CLOVER_LIVE_E2E=1`.
 
 ## Optional adapters
 
-`@clover/sdk/nestjs` exports a structural `CloverNestModule.forRoot()` dynamic
-module/provider adapter. Install `@nestjs/common` in the application when
-using it; Nest is an optional peer and is never loaded by the core client.
+`@clover/sdk/nestjs` and `@clover/sdk/chat` remain optional peer integrations.
+See previous sections in this package history for Nest and Chat adapter notes.
 
-`@clover/sdk/chat` provides a typed, framework-free Clover Chat adapter core
-for Vercel's optional `chat` peer. It maps RFC `Message-ID`, `In-Reply-To`, and
-`References` headers, exposes an application-owned webhook signature verifier,
-and implements outbound `openDM`/`post`. Edit, delete, reaction, and typing
-operations fail explicitly because Clover does not provide those semantics.
-Pass an explicit `baseUrl` or an already-configured `CloverClient`; no endpoint
-is assumed. The exact Vercel Chat SDK bridge remains application-owned so this
-package does not force a framework dependency.
+Releases use signed `typescript/v*` tags via `release-it`; see
+[`RELEASING.md`](RELEASING.md).

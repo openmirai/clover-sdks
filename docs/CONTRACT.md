@@ -1,6 +1,6 @@
 # Clover SDK ecosystem contract
 
-Verified: 2026-08-15
+Verified: 2026-08-20
 
 ## Coverage
 
@@ -11,7 +11,7 @@ Laravel, Ruby, .NET, and Elixir remain documentation-only community targets:
 
 | Ecosystem | Clover repository | Integration notes |
 | --- | --- | --- |
-| Node.js / TypeScript / NestJS / Chat SDK | `packages/typescript` | ESM package exports; optional NestJS provider and Vercel Chat SDK adapter subpath |
+| Node.js / TypeScript / NestJS / Chat SDK | `packages/typescript` | ESM package exports; native `@clover/sdk` + Resend drop-in `@clover/sdk/resend`; optional NestJS provider and Vercel Chat SDK adapter subpath |
 | Python | `packages/python` | Typed sync client |
 | Go | `packages/go` | Go module |
 | Java / Kotlin JVM | `packages/java` | Java client usable from Kotlin/JVM |
@@ -19,22 +19,26 @@ Laravel, Ruby, .NET, and Elixir remain documentation-only community targets:
 | Dart / Flutter | `packages/dart` | pub.dev package |
 | Swift / Apple platforms | `packages/swift` with root `Package.swift` | Swift Package Manager package |
 | CLI | `apps/cli` | GoReleaser multi-platform binary |
-| OpenAPI | `openapi/clover-v1.json` | Canonical generated contract snapshot |
+| OpenAPI | `openapi/clover-v1.json` | Snapshot synced from Clover backend `make swagger` (`/api/v1` + `CommonResponse`) |
 
 Documentation-only community guides for the deferred ecosystems are maintained
 at [`docs/community/`](community/). They define contract-first REST
 usage and generated-client options but make no package, framework, or support
 claim.
 
-The Swift SDK is an approved additional Clover platform lane. Kotlin uses the
-Java/JVM artifact rather than duplicating the client, and Flutter consumes the
-Dart package. The Vercel Chat SDK adapter is an optional TypeScript export so it
-does not create a second repository for the same language ecosystem.
+## Layering (TypeScript)
 
-Sources:
-
-- <https://resend.com/docs/sdks>
-- <https://resend.com/open-source>
+1. **Native** — `import { CloverClient } from "@clover/sdk"`
+   Clover-shaped API over `/api/v1`, unwraps `CommonResponse`, parses
+   `ErrorResponse`, and exposes `emails`, `domains`, `apiKeys`, and `webhooks`
+   (plus legacy flat email helpers). Full-product surfaces such as tenants and
+   incidents stay off the Resend façade.
+2. **Resend drop-in** — `import { Resend } from "@clover/sdk/resend"`
+   Mirrors the Resend Node surface for overlapping ops (`emails`, `batch`,
+   `domains`, `apiKeys`, `webhooks`): string addresses, tag arrays, batch raw
+   arrays → `{ items }`, Result-style `{ data, error }`, auto
+   `Idempotency-Key`, and `emails.update({ scheduledAt })` → Clover
+   `POST .../schedule`.
 
 ## Required client behavior
 
@@ -43,15 +47,26 @@ list operations when the public Clover contract supports them. Every client:
 
 - authenticates with a bearer API key and identifies its language/version in
   `User-Agent`;
-- validates required idempotency keys before a mutation leaves the process;
-- parses `application/problem+json` without discarding unknown extension
-  fields;
+- calls **`/api/v1/...`** (not `/v1/...`) and unwraps `CommonResponse.data` on
+  success;
+- parses V2 `ErrorResponse` (`success: false`, `error.code/type/message`) —
+  not RFC 9457 `application/problem+json`;
+- sends `X-Request-ID` values matching `^req_[A-Za-z0-9_-]{8,128}$` (auto when
+  omitted);
+- validates required idempotency keys before a mutation leaves the process
+  (Resend façade may auto-generate);
 - percent-encodes path segments and query values correctly;
 - returns request/response metadata needed for support correlation;
 - retries only safe/idempotent operations, with bounded attempts, backoff, and
   `Retry-After` support;
 - has deterministic transport-injected conformance tests and performs no live
-  sends during CI.
+  sends during default CI.
+
+## Live E2E (opt-in)
+
+Offline unit/conformance tests remain the default CI gate. Live Compose E2E is
+gated behind `CLOVER_LIVE_E2E=1`. See the root README and
+`packages/typescript/README.md` for bootstrap steps against the Clover stack.
 
 ## Repository readiness
 

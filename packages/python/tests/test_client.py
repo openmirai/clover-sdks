@@ -29,23 +29,46 @@ class ClientTests(unittest.TestCase):
         for key in ("a" * 7, "a" * 129, "a bad-key", "_" + "a" * 8):
             with self.assertRaises(ValueError):
                 client.send({"subject": "hello"}, key)
-        accepted = CloverClient("https://api.example.test", "secret", transport=FakeTransport([HttpResponse(202, {}, b"{}"), HttpResponse(202, {}, b"{}")] ))
+        accepted = CloverClient(
+            "https://api.example.test",
+            "secret",
+            transport=FakeTransport([HttpResponse(202, {}, b"{}"), HttpResponse(202, {}, b"{}")]),
+        )
         accepted.send({"subject": "hello"}, "a" * 8)
         accepted.send({"subject": "hello"}, "a" * 128)
 
     def test_send_headers_and_unknown_response_fields(self):
-        transport = FakeTransport([HttpResponse(202, {"X-Request-ID": "req_12345678"}, b'{"id":"e1","status":"queued","extra":true}')])
+        transport = FakeTransport(
+            [HttpResponse(202, {"X-Request-ID": "req_12345678"}, b'{"success":true,"data":{"id":"e1","status":"queued","extra":true},"requestId":"req_12345678"}')]
+        )
         client = CloverClient("https://api.example.test", "secret", transport=transport)
-        result = client.send({"from": {"address": "a@example.com"}, "to": [{"address": "b@example.com"}], "subject": "hi", "text": "body"}, "idem-1234")
+        result = client.send(
+            {
+                "from": {"address": "a@example.com"},
+                "to": [{"address": "b@example.com"}],
+                "subject": "hi",
+                "text": "body",
+            },
+            "idem-1234",
+        )
         self.assertTrue(result["extra"])
         self.assertEqual(transport.calls[0][2]["Authorization"], "Bearer secret")
         self.assertEqual(transport.calls[0][2]["Idempotency-Key"], "idem-1234")
 
     def test_bounded_get_retry_and_problem_preservation(self):
-        body = b'{"type":"about:blank","title":"Busy","status":503,"code":"BUSY","request_id":"req_12345678","vendor":{"x":1}}'
+        body = (
+            b'{"type":"about:blank","title":"Busy","status":503,"code":"BUSY",'
+            b'"request_id":"req_12345678","vendor":{"x":1}}'
+        )
         transport = FakeTransport([HttpResponse(503, {}, body), HttpResponse(503, {}, body)])
         sleeps = []
-        client = CloverClient("https://api.example.test", "secret", max_retries=1, transport=transport, sleep=sleeps.append)
+        client = CloverClient(
+            "https://api.example.test",
+            "secret",
+            max_retries=1,
+            transport=transport,
+            sleep=sleeps.append,
+        )
         with self.assertRaises(CloverError) as raised:
             client.get("e1")
         self.assertEqual(raised.exception.problem["vendor"]["x"], 1)
@@ -56,13 +79,13 @@ class ClientTests(unittest.TestCase):
         transport = FakeTransport([HttpResponse(200, {}, b'{"id":"e/1"}')])
         client = CloverClient("https://api.example.test", "secret", transport=transport)
         client.get("e/1 ?#")
-        self.assertEqual(transport.calls[0][1], "https://api.example.test/v1/emails/e%2F1%20%3F%23")
+        self.assertEqual(transport.calls[0][1], "https://api.example.test/api/v1/emails/e%2F1%20%3F%23")
 
     def test_list_query_encodes_cursor_and_filter_slashes(self):
         transport = FakeTransport([HttpResponse(200, {}, b'{"data":[]}')])
         client = CloverClient("https://api.example.test", "secret", transport=transport)
         client.list(cursor="next/page", route="a/b")
-        self.assertEqual(transport.calls[0][1], "https://api.example.test/v1/emails?route=a%2Fb&cursor=next%2Fpage")
+        self.assertEqual(transport.calls[0][1], "https://api.example.test/api/v1/emails?route=a%2Fb&cursor=next%2Fpage")
 
     def test_batch_strips_scheduled_at(self):
         transport = FakeTransport([HttpResponse(202, {}, b"{}")])

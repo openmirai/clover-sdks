@@ -453,28 +453,28 @@ public final class CloverClient: Sendable {
     }
 
     public func send(_ request: SendEmailRequest, idempotencyKey: String) async throws -> CloverResponse<EmailAccepted> {
-        try await perform("POST", path: "/v1/emails", body: request, idempotencyKey: idempotencyKey, decode: EmailAccepted.self)
+        try await perform("POST", path: "/api/v1/emails", body: request, idempotencyKey: idempotencyKey, decode: EmailAccepted.self)
     }
 
     public func sendBatch(_ items: [SendEmailRequest], idempotencyKey: String) async throws -> CloverResponse<EmailBatchAccepted> {
-        try await perform("POST", path: "/v1/emails/batch", body: ["items": items.map(BatchEmailItem.init)], idempotencyKey: idempotencyKey, decode: EmailBatchAccepted.self)
+        try await perform("POST", path: "/api/v1/emails/batch", body: ["items": items.map(BatchEmailItem.init)], idempotencyKey: idempotencyKey, decode: EmailBatchAccepted.self)
     }
 
     public func schedule(emailID: String, scheduledAt: String, idempotencyKey: String) async throws -> CloverResponse<EmailAccepted> {
-        try await perform("POST", path: "/v1/emails/\(Self.encodePathSegment(emailID))/schedule", body: ["scheduled_at": scheduledAt], idempotencyKey: idempotencyKey, decode: EmailAccepted.self)
+        try await perform("POST", path: "/api/v1/emails/\(Self.encodePathSegment(emailID))/schedule", body: ["scheduled_at": scheduledAt], idempotencyKey: idempotencyKey, decode: EmailAccepted.self)
     }
 
     public func cancel(emailID: String, idempotencyKey: String) async throws -> CloverResponse<EmailSummary> {
-        try await perform("POST", path: "/v1/emails/\(Self.encodePathSegment(emailID))/cancel", idempotencyKey: idempotencyKey, decode: EmailSummary.self)
+        try await perform("POST", path: "/api/v1/emails/\(Self.encodePathSegment(emailID))/cancel", idempotencyKey: idempotencyKey, decode: EmailSummary.self)
     }
 
     public func get(emailID: String) async throws -> CloverResponse<EmailDetail> {
-        try await perform("GET", path: "/v1/emails/\(Self.encodePathSegment(emailID))", decode: EmailDetail.self)
+        try await perform("GET", path: "/api/v1/emails/\(Self.encodePathSegment(emailID))", decode: EmailDetail.self)
     }
 
     public func list(options: ListEmailsOptions = .init()) async throws -> CloverResponse<EmailPage> {
         let query = options.queryItems.sorted { $0.key < $1.key }.map { "\(Self.encodeQueryComponent($0.key))=\(Self.encodeQueryComponent($0.value))" }.joined(separator: "&")
-        let path = query.isEmpty ? "/v1/emails" : "/v1/emails?\(query)"
+        let path = query.isEmpty ? "/api/v1/emails" : "/api/v1/emails?\(query)"
         return try await perform("GET", path: path, decode: EmailPage.self)
     }
 
@@ -505,7 +505,10 @@ public final class CloverClient: Sendable {
                 throw CloverError(statusCode: response.statusCode, problem: nil, metadata: metadata, message: "Clover response body exceeds the configured limit")
             }
             if (200..<300).contains(response.statusCode) {
-                do { return CloverResponse(value: try JSONDecoder().decode(Value.self, from: response.body), metadata: metadata) }
+                do {
+                    let payload = try Self.unwrapEnvelope(response.body)
+                    return CloverResponse(value: try JSONDecoder().decode(Value.self, from: payload), metadata: metadata)
+                }
                 catch { throw CloverError(statusCode: response.statusCode, problem: nil, metadata: metadata, message: "Clover returned an invalid response: \(error.localizedDescription)") }
             }
             if (method == "GET" || idempotencyKey != nil), Self.retryable.contains(response.statusCode), attempt < configuration.maxRetries {
@@ -519,6 +522,16 @@ public final class CloverClient: Sendable {
 
     public static let defaultSleep: @Sendable (TimeInterval) async -> Void = { seconds in
         if seconds > 0 { try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000)) }
+    }
+
+    private static func unwrapEnvelope(_ body: Data) throws -> Data {
+        guard
+            let object = try JSONSerialization.jsonObject(with: body) as? [String: Any],
+            object["success"] is Bool
+        else { return body }
+        guard object["success"] as? Bool == true else { return body }
+        let data = object["data"] ?? [String: Any]()
+        return try JSONSerialization.data(withJSONObject: data)
     }
 
     private static func metadata(_ response: HTTPResponse) -> ResponseMetadata {

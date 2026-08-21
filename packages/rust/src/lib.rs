@@ -154,7 +154,7 @@ impl CloverClient {
         request: JsonValue,
         idempotency_key: &str,
     ) -> Result<JsonValue, CloverError> {
-        self.request("POST", "/v1/emails", Some(request), Some(idempotency_key))
+        self.request("POST", "/api/v1/emails", Some(request), Some(idempotency_key))
     }
     pub fn send_batch(
         &self,
@@ -173,7 +173,7 @@ impl CloverClient {
             .collect();
         self.request(
             "POST",
-            "/v1/emails/batch",
+            "/api/api/v1/emails/batch",
             Some(JsonValue::object([(
                 String::from("items"),
                 JsonValue::array(sanitized),
@@ -189,7 +189,7 @@ impl CloverClient {
     ) -> Result<JsonValue, CloverError> {
         self.request(
             "POST",
-            &format!("/v1/emails/{}/schedule", escape(id)),
+            &format!("/api/api/v1/emails/{}/schedule", escape(id)),
             Some(JsonValue::object([(
                 String::from("scheduled_at"),
                 scheduled_at.into(),
@@ -200,13 +200,13 @@ impl CloverClient {
     pub fn cancel(&self, id: &str, idempotency_key: &str) -> Result<JsonValue, CloverError> {
         self.request(
             "POST",
-            &format!("/v1/emails/{}/cancel", escape(id)),
+            &format!("/api/api/v1/emails/{}/cancel", escape(id)),
             None,
             Some(idempotency_key),
         )
     }
     pub fn get(&self, id: &str) -> Result<JsonValue, CloverError> {
-        self.request("GET", &format!("/v1/emails/{}", escape(id)), None, None)
+        self.request("GET", &format!("/api/api/v1/emails/{}", escape(id)), None, None)
     }
     pub fn list(&self, query: &BTreeMap<String, String>) -> Result<JsonValue, CloverError> {
         let encoded = query
@@ -217,7 +217,7 @@ impl CloverClient {
         self.request(
             "GET",
             &format!(
-                "/v1/emails{}",
+                "/api/v1/emails{}",
                 if encoded.is_empty() {
                     String::new()
                 } else {
@@ -305,7 +305,7 @@ impl CloverClient {
                 }
             };
             if (200..300).contains(&response.status) {
-                return Ok(parsed);
+                return Ok(unwrap_envelope(parsed));
             }
             if (method == "GET" || idempotency_key.is_some())
                 && retryable(response.status)
@@ -321,13 +321,23 @@ impl CloverClient {
             }
             let message = match &parsed {
                 JsonValue::Object(map) => map
-                    .get("title")
-                    .and_then(|value| {
-                        if let JsonValue::String(text) = value {
-                            Some(text.clone())
-                        } else {
-                            None
-                        }
+                    .get("error")
+                    .and_then(|value| match value {
+                        JsonValue::Object(error) => error.get("message"),
+                        _ => None,
+                    })
+                    .and_then(|value| match value {
+                        JsonValue::String(text) => Some(text.clone()),
+                        _ => None,
+                    })
+                    .or_else(|| {
+                        map.get("title").and_then(|value| {
+                            if let JsonValue::String(text) = value {
+                                Some(text.clone())
+                            } else {
+                                None
+                            }
+                        })
                     })
                     .unwrap_or_else(|| format!("Clover request failed ({})", response.status)),
                 _ => format!("Clover request failed ({})", response.status),
@@ -340,6 +350,19 @@ impl CloverClient {
             });
         }
         unreachable!()
+    }
+}
+
+fn unwrap_envelope(parsed: JsonValue) -> JsonValue {
+    match parsed {
+        JsonValue::Object(map) if matches!(map.get("success"), Some(JsonValue::Bool(_))) => {
+            if map.get("success") == Some(&JsonValue::Bool(true)) {
+                map.get("data").cloned().unwrap_or(JsonValue::Object(Default::default()))
+            } else {
+                JsonValue::Object(map)
+            }
+        }
+        other => other,
     }
 }
 

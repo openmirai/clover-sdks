@@ -30,7 +30,7 @@ func response(status int, body string) *http.Response {
 }
 
 func TestSendAndRetry(t *testing.T) {
-	fake := &fakeDoer{responses: []*http.Response{response(503, `{"type":"about:blank","title":"Busy","status":503,"code":"BUSY","request_id":"req_12345678","vendor":{"x":1}}`), response(202, `{"id":"e1","status":"queued","extra":true}`)}}
+	fake := &fakeDoer{responses: []*http.Response{response(503, `{"type":"about:blank","title":"Busy","status":503,"code":"BUSY","request_id":"req_12345678","vendor":{"x":1}}`), response(202, `{"success":true,"data":{"id":"e1","status":"queued","extra":true},"requestId":"req_12345678"}`)}}
 	c := NewClient("https://api.example.test", "secret")
 	c.HTTPClient = fake
 	c.Sleep = func(context.Context, time.Duration) error { return nil }
@@ -86,7 +86,7 @@ func TestProblemAndBoundedRetry(t *testing.T) {
 func TestRetryAfterZeroIsHonored(t *testing.T) {
 	first := response(503, `{"type":"about:blank","title":"Busy","status":503,"code":"BUSY"}`)
 	first.Header.Set("Retry-After", "0")
-	fake := &fakeDoer{responses: []*http.Response{first, response(200, `{}`)}}
+	fake := &fakeDoer{responses: []*http.Response{first, response(200, `{"success":true,"data":{}}`)}}
 	c := NewClient("https://api.example.test", "secret")
 	c.HTTPClient = fake
 	c.MaxRetries = 1

@@ -8,12 +8,15 @@ uses `urllib`, sends bearer authentication and a `User-Agent`, and requires an
 from clover_sdk import CloverClient
 
 client = CloverClient("https://api.example.com", "re_public_secret")
-accepted = client.send({
-    "from": {"address": "sender@example.com"},
-    "to": [{"address": "user@example.com"}],
-    "subject": "Hello",
-    "text": "Accepted asynchronously",
-}, "order-1234")
+accepted = client.send(
+    {
+        "from": {"address": "sender@example.com"},
+        "to": [{"address": "user@example.com"}],
+        "subject": "Hello",
+        "text": "Accepted asynchronously",
+    },
+    "order-1234",
+)
 ```
 
 The client also exposes `get`, cursor-aware `list`, `send_batch`, `schedule`,

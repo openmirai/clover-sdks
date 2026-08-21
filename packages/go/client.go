@@ -58,9 +58,18 @@ type ResponseMeta struct {
 	Replayed           bool
 }
 
+type ErrorDetail struct {
+	Code    int               `json:"code"`
+	Type    string            `json:"type"`
+	Message string            `json:"message"`
+	Details string            `json:"details,omitempty"`
+	Fields  map[string]string `json:"fields,omitempty"`
+}
+
 type Error struct {
 	Status  int
 	Problem *Problem
+	Detail  *ErrorDetail
 	Meta    ResponseMeta
 	Message string
 }
@@ -99,7 +108,7 @@ func NewClient(baseURL, apiKey string) *Client {
 }
 
 func (c *Client) Send(ctx context.Context, request JSON, idempotencyKey string) (JSON, ResponseMeta, error) {
-	return c.request(ctx, http.MethodPost, "/v1/emails", request, idempotencyKey)
+	return c.request(ctx, http.MethodPost, "/api/v1/emails", request, idempotencyKey)
 }
 
 func (c *Client) SendBatch(ctx context.Context, items []JSON, idempotencyKey string) (JSON, ResponseMeta, error) {
@@ -113,23 +122,23 @@ func (c *Client) SendBatch(ctx context.Context, items []JSON, idempotencyKey str
 		}
 		sanitized = append(sanitized, copyItem)
 	}
-	return c.request(ctx, http.MethodPost, "/v1/emails/batch", JSON{"items": sanitized}, idempotencyKey)
+	return c.request(ctx, http.MethodPost, "/api/v1/emails/batch", JSON{"items": sanitized}, idempotencyKey)
 }
 
 func (c *Client) Schedule(ctx context.Context, id, scheduledAt, idempotencyKey string) (JSON, ResponseMeta, error) {
-	return c.request(ctx, http.MethodPost, "/v1/emails/"+url.PathEscape(id)+"/schedule", JSON{"scheduled_at": scheduledAt}, idempotencyKey)
+	return c.request(ctx, http.MethodPost, "/api/v1/emails/"+url.PathEscape(id)+"/schedule", JSON{"scheduled_at": scheduledAt}, idempotencyKey)
 }
 
 func (c *Client) Cancel(ctx context.Context, id, idempotencyKey string) (JSON, ResponseMeta, error) {
-	return c.request(ctx, http.MethodPost, "/v1/emails/"+url.PathEscape(id)+"/cancel", nil, idempotencyKey)
+	return c.request(ctx, http.MethodPost, "/api/v1/emails/"+url.PathEscape(id)+"/cancel", nil, idempotencyKey)
 }
 
 func (c *Client) Get(ctx context.Context, id string) (JSON, ResponseMeta, error) {
-	return c.request(ctx, http.MethodGet, "/v1/emails/"+url.PathEscape(id), nil, "")
+	return c.request(ctx, http.MethodGet, "/api/v1/emails/"+url.PathEscape(id), nil, "")
 }
 
 func (c *Client) List(ctx context.Context, query url.Values) (JSON, ResponseMeta, error) {
-	path := "/v1/emails"
+	path := "/api/v1/emails"
 	if encoded := query.Encode(); encoded != "" {
 		path += "?" + encoded
 	}
@@ -160,9 +169,10 @@ func (c *Client) request(ctx context.Context, method, path string, payload JSON,
 		if err != nil {
 			return nil, ResponseMeta{}, err
 		}
-		req.Header.Set("Accept", "application/json, application/problem+json")
+		req.Header.Set("Accept", "application/json")
 		req.Header.Set("Authorization", "Bearer "+c.APIKey)
 		req.Header.Set("User-Agent", c.UserAgent)
+		req.Header.Set("X-Request-ID", "req_"+strconv.FormatInt(time.Now().UnixNano(), 36)+strconv.Itoa(attempt))
 		if payload != nil {
 			req.Header.Set("Content-Type", "application/json")
 		}
@@ -197,6 +207,18 @@ func (c *Client) request(ctx context.Context, method, path string, payload JSON,
 					return nil, meta, err
 				}
 			}
+			if success, ok := result["success"].(bool); ok {
+				if !success {
+					return nil, meta, decodeAPIError(response.StatusCode, data, meta)
+				}
+				if requestID, ok := result["requestId"].(string); ok && meta.RequestID == "" {
+					meta.RequestID = requestID
+				}
+				if payload, ok := result["data"].(map[string]any); ok {
+					return JSON(payload), meta, nil
+				}
+				return JSON{}, meta, nil
+			}
 			return result, meta, nil
 		}
 		if safe && isRetryable(response.StatusCode) && attempt < maxRetries {
@@ -222,17 +244,38 @@ func (c *Client) request(ctx context.Context, method, path string, payload JSON,
 			}
 			continue
 		}
-		var problem Problem
-		var problemPtr *Problem
-		if json.Unmarshal(data, &problem) == nil && problem.Title != "" {
-			problemPtr = &problem
-		}
-		message := fmt.Sprintf("Clover request failed (%d)", response.StatusCode)
-		if problemPtr != nil {
-			message = problemPtr.Title
-		}
-		return nil, meta, &Error{Status: response.StatusCode, Problem: problemPtr, Meta: meta, Message: message}
+		return nil, meta, decodeAPIError(response.StatusCode, data, meta)
 	}
+}
+
+func decodeAPIError(status int, data []byte, meta ResponseMeta) *Error {
+	var envelope struct {
+		Success   bool         `json:"success"`
+		Error     *ErrorDetail `json:"error"`
+		RequestID string       `json:"requestId"`
+	}
+	if json.Unmarshal(data, &envelope) == nil && envelope.Error != nil && envelope.Error.Message != "" {
+		if meta.RequestID == "" {
+			meta.RequestID = envelope.RequestID
+		}
+		return &Error{
+			Status:  status,
+			Detail:  envelope.Error,
+			Problem: &Problem{Title: envelope.Error.Message, Status: status, Code: strconv.Itoa(envelope.Error.Code), Type: envelope.Error.Type, RequestID: meta.RequestID},
+			Meta:    meta,
+			Message: envelope.Error.Message,
+		}
+	}
+	var problem Problem
+	var problemPtr *Problem
+	if json.Unmarshal(data, &problem) == nil && problem.Title != "" {
+		problemPtr = &problem
+	}
+	message := fmt.Sprintf("Clover request failed (%d)", status)
+	if problemPtr != nil {
+		message = problemPtr.Title
+	}
+	return &Error{Status: status, Problem: problemPtr, Meta: meta, Message: message}
 }
 
 func responseMeta(headers http.Header) ResponseMeta {

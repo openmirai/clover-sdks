@@ -27,7 +27,7 @@ public final class ClientConformanceTest {
       return new CloverClient.RawResponse(200, Map.of(), "{\"id\":\"e/1\",\"unicode\":\"\\u0E01\"}");
     }, ignored -> {});
     Map<String, Object> encoded = encodedClient.get("e/1 ?#");
-    assert urls.get(0).equals("https://api.example.test/v1/emails/e%2F1%20%3F%23");
+    assert urls.get(0).equals("https://api.example.test/api/v1/emails/e%2F1%20%3F%23");
     assert "ก".equals(encoded.get("unicode"));
 
     boolean invalidJsonRejected = false;

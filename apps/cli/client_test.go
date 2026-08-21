@@ -116,7 +116,7 @@ func TestSendBatchAndScheduleUseCanonicalPaths(t *testing.T) {
 	if _, _, err := client.Schedule(context.Background(), "e/1", "2030-01-01T00:00:00Z", "idem-schedule"); err != nil {
 		t.Fatal(err)
 	}
-	if len(requests) != 2 || requests[0] != "/v1/emails/batch" || requests[1] != "/v1/emails/e%2F1/schedule" {
+	if len(requests) != 2 || requests[0] != "/api/v1/emails/batch" || requests[1] != "/api/v1/emails/e%2F1/schedule" {
 		t.Fatalf("paths = %#v", requests)
 	}
 }

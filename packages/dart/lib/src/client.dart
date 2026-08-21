@@ -290,27 +290,27 @@ class CloverClient {
   static const _retryable = {408, 425, 429, 500, 502, 503, 504};
 
   Future<CloverResponse<EmailAccepted>> send(SendEmailRequest request, {required String idempotencyKey}) {
-    return _request('/v1/emails', method: 'POST', body: request.toJson(), idempotencyKey: idempotencyKey, decode: EmailAccepted.fromJson);
+    return _request('/api/v1/emails', method: 'POST', body: request.toJson(), idempotencyKey: idempotencyKey, decode: EmailAccepted.fromJson);
   }
 
   Future<CloverResponse<EmailBatchAccepted>> sendBatch(List<SendEmailRequest> items, {required String idempotencyKey}) {
-    return _request('/v1/emails/batch', method: 'POST', body: <String, dynamic>{'items': items.map((item) => item.toBatchJson()).toList(growable: false)}, idempotencyKey: idempotencyKey, decode: EmailBatchAccepted.fromJson);
+    return _request('/api/v1/emails/batch', method: 'POST', body: <String, dynamic>{'items': items.map((item) => item.toBatchJson()).toList(growable: false)}, idempotencyKey: idempotencyKey, decode: EmailBatchAccepted.fromJson);
   }
 
   Future<CloverResponse<EmailAccepted>> schedule(String emailId, String scheduledAt, {required String idempotencyKey}) {
-    return _request('/v1/emails/${Uri.encodeComponent(emailId)}/schedule', method: 'POST', body: <String, dynamic>{'scheduled_at': scheduledAt}, idempotencyKey: idempotencyKey, decode: EmailAccepted.fromJson);
+    return _request('/api/v1/emails/${Uri.encodeComponent(emailId)}/schedule', method: 'POST', body: <String, dynamic>{'scheduled_at': scheduledAt}, idempotencyKey: idempotencyKey, decode: EmailAccepted.fromJson);
   }
 
   Future<CloverResponse<EmailSummary>> cancel(String emailId, {required String idempotencyKey}) {
-    return _request('/v1/emails/${Uri.encodeComponent(emailId)}/cancel', method: 'POST', idempotencyKey: idempotencyKey, decode: EmailSummary.fromJson);
+    return _request('/api/v1/emails/${Uri.encodeComponent(emailId)}/cancel', method: 'POST', idempotencyKey: idempotencyKey, decode: EmailSummary.fromJson);
   }
 
   Future<CloverResponse<EmailDetail>> get(String emailId) {
-    return _request('/v1/emails/${Uri.encodeComponent(emailId)}', decode: EmailDetail.fromJson);
+    return _request('/api/v1/emails/${Uri.encodeComponent(emailId)}', decode: EmailDetail.fromJson);
   }
 
   Future<CloverResponse<EmailPage>> list({ListEmailsOptions options = const ListEmailsOptions()}) {
-    return _request('/v1/emails', query: options.toQuery(), decode: EmailPage.fromJson);
+    return _request('/api/v1/emails', query: options.toQuery(), decode: EmailPage.fromJson);
   }
 
   Future<CloverResponse<T>> _request<T>(
@@ -340,7 +340,7 @@ class CloverClient {
       final responseBody = await _readBoundedBody(streamed, metadata);
       final decodedBody = _decodeBody(responseBody);
       if (streamed.statusCode >= 200 && streamed.statusCode < 300) {
-        return CloverResponse(value: decode(decodedBody), metadata: metadata);
+        return CloverResponse(value: decode(_unwrapEnvelope(decodedBody)), metadata: metadata);
       }
       if ((method == 'GET' || idempotencyKey != null) && _retryable.contains(streamed.statusCode) && attempt < maxRetries) {
         await sleep(metadata.retryAfter ?? retryBaseDelay * (1 << attempt));
@@ -349,6 +349,14 @@ class CloverClient {
       final problem = _isProblem(decodedBody) ? ProblemDocument.fromJson(decodedBody) : null;
       throw CloverException(statusCode: streamed.statusCode, problem: problem, metadata: metadata);
     }
+  }
+
+  static Map<String, dynamic> _unwrapEnvelope(Map<String, dynamic> decoded) {
+    if (decoded['success'] is! bool) return decoded;
+    if (decoded['success'] != true) return decoded;
+    final data = decoded['data'];
+    if (data is Map<String, dynamic>) return data;
+    return <String, dynamic>{};
   }
 
   Future<String> _readBoundedBody(http.StreamedResponse response, ResponseMetadata metadata) async {

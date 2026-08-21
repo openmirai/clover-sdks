@@ -19,7 +19,7 @@ void main() {
         expect(request.headers['authorization'], 'Bearer re_test');
         expect(request.headers['user-agent'], 'clover-sdk-dart/0.1.0');
         expect(request.headers['idempotency-key'], 'idem-1234');
-        expect(request.url.toString(), contains('/v1/emails/a%2Fb/schedule'));
+        expect(request.url.toString(), contains('/api/v1/emails/a%2Fb/schedule'));
         if (attempts == 1) return http.Response('', 503, headers: {'retry-after': '0'});
         return http.Response(jsonEncode({'id': 'email-1', 'status': 'queued', 'request_id': 'req-1'}), 202, headers: {'x-request-id': 'req-1'});
       }),

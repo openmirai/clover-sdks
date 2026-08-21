@@ -9,7 +9,7 @@ at the root.
 
 | Platform | Location | Distribution |
 | --- | --- | --- |
-| TypeScript / Node.js | [`packages/typescript`](packages/typescript/) | npm `@clover/sdk` |
+| TypeScript / Node.js | [`packages/typescript`](packages/typescript/) | npm `@clover/sdk` (+ `@clover/sdk/resend`) |
 | Python | [`packages/python`](packages/python/) | PyPI `clover-sdk` |
 | Go | [`packages/go`](packages/go/) | Go module `github.com/openmirai/clover-sdks/packages/go` |
 | Java / Kotlin JVM | [`packages/java`](packages/java/) | Maven `dev.clover:clover-sdk` |
@@ -20,6 +20,22 @@ at the root.
 
 Documentation-only community targets for .NET, Elixir, PHP, and Ruby are in
 [`docs/community`](docs/community/). They are not maintained implementations.
+
+## V2 + Resend layering
+
+All clients target Clover V2:
+
+- Base path **`/api/v1`**
+- Success envelope **`CommonResponse`** (SDKs unwrap `data`)
+- Errors as **`ErrorResponse`** (not `application/problem+json`)
+
+TypeScript ships two surfaces:
+
+- **Native** `@clover/sdk` — Clover-shaped API + domains / apiKeys / webhooks
+- **Resend drop-in** `@clover/sdk/resend` — `new Resend(apiKey)` with Result-style
+  `{ data, error }` for overlapping email/domain/key/webhook ops
+
+See [`docs/CONTRACT.md`](docs/CONTRACT.md) for the full contract.
 
 ## Development
 
@@ -34,6 +50,21 @@ make check
 `make check-typescript`, `make check-go`, or `make check-swift` are available for
 focused work. Root pre-commit hooks are path-scoped and delegate to native
 formatters and linters.
+
+### Live TypeScript E2E
+
+Default CI is offline. Against a local Clover Compose stack:
+
+```sh
+# in clover/
+make up && make migrate
+make api    # terminal 1
+make worker # terminal 2
+
+# in clover-sdks/packages/typescript/
+node scripts/live-e2e-bootstrap.mjs
+CLOVER_LIVE_E2E=1 npx vitest run test/e2e.live.test.ts
+```
 
 ## Versioning and releases
 
@@ -56,5 +87,5 @@ registry supports them.
 
 All clients expose the canonical send, batch-send, schedule, cancel, get, and
 list operations. Mutation calls require a bounded `Idempotency-Key`; clients
-preserve request metadata and RFC problem fields, bound response bodies, and
-retry only safe transient failures.
+preserve request metadata, bound response bodies, and retry only safe transient
+failures. Sync OpenAPI from the Clover backend swagger into `openapi/`.
