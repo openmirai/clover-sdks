@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   repository:
-    runs-on: ubuntu-24.04
+    runs-on: codebuild-be-mirai-arm-builder-sm-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -22,7 +22,7 @@ jobs:
       - run: python3 scripts/check_repository.py
 
   go:
-    runs-on: ubuntu-24.04
+    runs-on: codebuild-be-mirai-arm-builder-sm-${{ github.run_id }}-${{ github.run_attempt }}
     strategy:
       fail-fast: false
       matrix:

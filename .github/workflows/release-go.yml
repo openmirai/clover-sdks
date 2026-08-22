@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: codebuild-be-mirai-arm-builder-sm-${{ github.run_id }}-${{ github.run_attempt }}
     defaults:
       run:
         working-directory: packages/go
