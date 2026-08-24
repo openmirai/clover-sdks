@@ -12,7 +12,7 @@ only release-ready clients in this milestone.
 | --- | --- | --- |
 | Go | `packages/go` | Go module |
 | CLI | `apps/cli` | GoReleaser multi-platform binary |
-| OpenAPI | `openapi/clover-v1.json` | Snapshot synced from Clover backend `make swagger` (`/api/v1` + `CommonResponse`) |
+| OpenAPI | `openapi/clover-v1.json` | Byte-synced from backend `cmd/api/docs/swagger.json`; verify with `make check-openapi` |
 
 TypeScript, Python, Java/Kotlin, Rust, Swift, and Dart/Flutter package
 directories are deferred and carry no current support, compatibility, or
@@ -57,6 +57,40 @@ Clover contract. The Go SDK and CLI:
   `Retry-After` support;
 - has deterministic transport-injected conformance tests and performs no live
   sends during default CI.
+
+## Go SDK Phase 1 platform surface
+
+The account/environment-scoped Phase 1 surface is exposed under
+`client.Platform`. New resources use canonical paths with escaped
+`account_id` and `environment_id` segments; they do not accept or emit the
+legacy `tenant_id`, `project_id`, or query-style `environment` scope.
+
+- `Platform.Accounts` and `Platform.Environments` manage client accounts and
+  environments.
+- `Platform.Messages` covers transactional send, batch, get, schedule, and
+  cancel. `Platform.Templates` covers immutable versions, compare, render,
+  publish, rollback, archive, and unarchive.
+- `Platform.Webhooks` and `Platform.Timeline` cover scoped webhook delivery
+  and redacted message history. `Platform.Inbound` covers received messages,
+  signed provider callbacks, receiving-domain configuration, and attachments.
+  `Platform.Preferences` and `Platform.Suppressions` cover hosted preference
+  tokens, topics, RFC 8058 unsubscribe, and scoped consent.
+- `Platform.SMTP` covers scoped credentials and submission history.
+  `Platform.Contacts`, `Platform.Segments`, and `Platform.Automations` cover
+  the audience/lifecycle foundation.
+- `Platform.Routing` covers policy, providers, routes, pools, IP assignments,
+  and deterministic dry-run resolution. `Platform.Domains` and
+  `Platform.DomainHealth` cover outbound-domain onboarding and authentication
+  reports. `Platform.Usage` covers vocabulary, immutable fact export and
+  corrections, and reconciliation evidence.
+
+Every environment-scoped method takes `PlatformScope{AccountID,
+EnvironmentID}`. Mutations documented with an `Idempotency-Key` validate it
+before transport, and the client bounds both request and response bodies.
+GETs and explicitly keyed mutations may retry transient responses with bounded
+backoff and `Retry-After`; unkeyed writes are not retried. Response metadata
+retains correlation and replay/rate-limit details, while secret-bearing
+mutation bodies are never retained.
 
 ## Live E2E (opt-in)
 
