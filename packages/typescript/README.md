@@ -33,6 +33,27 @@ await clover.apiKeys.list();
 await clover.webhooks.list();
 ```
 
+The clean platform surface scopes every message call to a client account and
+environment:
+
+```ts
+const scope = {
+  accountId: "account_01",
+  environmentId: "environment_01",
+};
+
+const message = await clover.platformMessages.send(
+  scope,
+  {
+    from: { address: "sender@example.com" },
+    to: [{ address: "user@example.com" }],
+    subject: "Hello",
+    text: "Sent through the scoped platform API",
+  },
+  { idempotencyKey: "order-1234" },
+);
+```
+
 Legacy flat helpers (`send`, `sendBatch`, `schedule`, `cancel`, `get`, `list`)
 still work and delegate to `emails.*`.
 

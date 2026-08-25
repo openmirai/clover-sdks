@@ -1,25 +1,25 @@
 # Clover SDKs
 
 Official Clover API clients live in this polyglot monorepo. The current release
-scope is intentionally limited to the Go SDK and Go-based Clover CLI. Other
-language directories are preserved as deferred implementation work and are not
-part of the current support or readiness claim.
+scope covers the TypeScript SDK, Go SDK, and Go-based Clover CLI. Other language
+directories remain integration-ready previews until their package-specific
+release gates are complete.
 
 ## Current release scope
 
 | Platform | Location | Distribution |
 | --- | --- | --- |
+| TypeScript | [`packages/typescript`](packages/typescript/) | npm package `@clover/sdk` |
 | Go | [`packages/go`](packages/go/) | Go module `github.com/openmirai/clover-sdks/packages/go` |
 | CLI | [`apps/cli`](apps/cli/) | GoReleaser binaries and Go module `github.com/openmirai/clover-sdks/apps/cli` |
 
-TypeScript, Python, Java/Kotlin, Rust, Swift, and Dart/Flutter packages are
-deferred. Their presence in this repository is not a publication, support, or
-compatibility guarantee. Documentation-only community targets for .NET,
+Python, Java/Kotlin, Rust, Swift, and Dart/Flutter packages are not included in
+the current publication claim. Documentation-only community targets for .NET,
 Elixir, PHP, and Ruby are in [`docs/community`](docs/community/).
 
 ## V2 + Resend layering
 
-The Go SDK and CLI target Clover V2:
+The TypeScript SDK, Go SDK, and CLI target Clover V2:
 
 - Base path **`/api/v1`**
 - Success envelope **`CommonResponse`** (SDKs unwrap `data`)
@@ -36,14 +36,15 @@ Use the native toolchain inside the package you are changing. The root
 make check
 ```
 
-`make check` validates the repository layout, Go SDK, and CLI. The `check-all`
-target remains available for future work on deferred package directories, but
-it is not part of the current readiness gate.
+`make check` validates the repository layout, Go SDK, and CLI. TypeScript is
+verified independently with `npm run format:check`, `npm run lint`,
+`npm run typecheck`, `npm test`, and `npm pack --dry-run` in its package.
 
 ## Versioning and releases
 
 Current releases use independent tags:
 
+- `typescript/vX.Y.Z`
 - `packages/go/vX.Y.Z`
 - `apps/cli/vX.Y.Z`
 

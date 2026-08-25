@@ -27,6 +27,30 @@ impl Transport for OneShot {
             .expect("one response"))
     }
 }
+
+type CapturedRequest = (String, String, BTreeMap<String, String>);
+struct Capture {
+    requests: Arc<Mutex<Vec<CapturedRequest>>>,
+}
+impl Transport for Capture {
+    fn send(
+        &self,
+        method: &str,
+        url: &str,
+        headers: &BTreeMap<String, String>,
+        _body: Option<&str>,
+    ) -> Result<RawResponse, String> {
+        self.requests
+            .lock()
+            .unwrap()
+            .push((method.into(), url.into(), headers.clone()));
+        Ok(RawResponse {
+            status: 200,
+            headers: BTreeMap::new(),
+            body: "{}".into(),
+        })
+    }
+}
 impl Transport for Fake {
     fn send(
         &self,
@@ -265,6 +289,45 @@ fn batch_strips_scheduled_at() {
         (String::from("scheduled_at"), "2030-01-01".into()),
     ]);
     assert!(client.send_batch(vec![item], "batch-1234").is_ok());
+}
+
+#[test]
+fn all_routes_use_one_api_prefix_and_originate_request_ids() {
+    let requests = Arc::new(Mutex::new(Vec::new()));
+    let client = CloverClient::with_transport(
+        "https://api.example.test",
+        "secret",
+        Box::new(Capture {
+            requests: requests.clone(),
+        }),
+        Box::new(|_| {}),
+    );
+    client.send_batch(Vec::new(), "batch-1234").unwrap();
+    client
+        .schedule("email/1", "2030-01-01T00:00:00Z", "schedule-1234")
+        .unwrap();
+    client.cancel("email/1", "cancel-1234").unwrap();
+    client.get("email/1").unwrap();
+
+    let requests = requests.lock().unwrap();
+    let urls = requests
+        .iter()
+        .map(|(_, url, _)| url.as_str())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        urls,
+        vec![
+            "https://api.example.test/api/v1/emails/batch",
+            "https://api.example.test/api/v1/emails/email%2F1/schedule",
+            "https://api.example.test/api/v1/emails/email%2F1/cancel",
+            "https://api.example.test/api/v1/emails/email%2F1",
+        ]
+    );
+    for (_, _, headers) in requests.iter() {
+        let request_id = headers.get("x-request-id").expect("request id header");
+        assert!(request_id.starts_with("req_"));
+        assert!(request_id.len() >= 12);
+    }
 }
 
 #[test]

@@ -36,6 +36,8 @@ final class CloverClientTests: XCTestCase {
         XCTAssertTrue(requests[0].url.absoluteString.contains("a%2Fb"))
         XCTAssertEqual(requests[0].headers["Authorization"], "Bearer re_test")
         XCTAssertEqual(requests[0].headers["Idempotency-Key"], "idem-1234")
+        XCTAssertTrue(requests[0].headers["X-Request-ID"]?.hasPrefix("req_") == true)
+        XCTAssertEqual(requests[0].headers["X-Request-ID"], requests[1].headers["X-Request-ID"])
     }
 
     func testBatchOmitsScheduleOnlyField() async throws {
@@ -106,6 +108,26 @@ final class CloverClientTests: XCTestCase {
         } catch let error as CloverError {
             XCTAssertEqual(error.problem?.extra["new_extension"], .object(["flag": .boolean(true)]))
             XCTAssertEqual(error.metadata.rateLimitRemaining, 7)
+        } catch {
+            XCTFail("unexpected error: \(error)")
+        }
+    }
+
+    func testNestedV2ErrorEnvelopeIsDecoded() async {
+        let body = #"{"success":false,"error":{"code":2002,"type":"VALIDATION_ERROR","message":"Email is invalid","fields":{"email":"invalid"}},"timestamp":"2026-08-25T00:00:00Z","requestId":"req_12345678"}"#.data(using: .utf8)!
+        let transport = StubTransport { request in
+            XCTAssertTrue(request.headers["X-Request-ID"]?.hasPrefix("req_") == true)
+            return HTTPResponse(statusCode: 422, headers: ["X-Request-ID": "req_12345678"], body: body)
+        }
+        let client = CloverClient(configuration: CloverClientConfiguration(baseURL: URL(string: "https://api.example.test")!, apiKey: "key"), transport: transport)
+        do {
+            _ = try await client.get(emailID: "email-1")
+            XCTFail("expected V2 error")
+        } catch let error as CloverError {
+            XCTAssertEqual(error.message, "Email is invalid")
+            XCTAssertEqual(error.problem?.code, "2002")
+            XCTAssertEqual(error.problem?.type, "VALIDATION_ERROR")
+            XCTAssertEqual(error.problem?.requestID, "req_12345678")
         } catch {
             XCTFail("unexpected error: \(error)")
         }

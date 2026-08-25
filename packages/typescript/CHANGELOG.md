@@ -11,6 +11,8 @@ signed `v*` tag.
 - Add Resend drop-in export `@clover/sdk/resend` with Result-style responses.
 - Add opt-in live Compose E2E (`CLOVER_LIVE_E2E=1`).
 - Auto-send `X-Request-ID` values compatible with Clover DB constraints.
+- Add account/environment-scoped `platformMessages` send, get, list, schedule,
+  and cancel operations.
 
 ## 0.1.0
 

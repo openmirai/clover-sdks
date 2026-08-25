@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -329,6 +330,7 @@ class CloverClient {
       'accept': 'application/json, application/problem+json',
       'authorization': 'Bearer $apiKey',
       'user-agent': userAgent,
+      'x-request-id': _createRequestId(),
       if (body != null) 'content-type': 'application/json',
       if (idempotencyKey != null) 'idempotency-key': idempotencyKey,
     };
@@ -346,7 +348,7 @@ class CloverClient {
         await sleep(metadata.retryAfter ?? retryBaseDelay * (1 << attempt));
         continue;
       }
-      final problem = _isProblem(decodedBody) ? ProblemDocument.fromJson(decodedBody) : null;
+      final problem = _problemFromResponse(decodedBody, streamed.statusCode);
       throw CloverException(statusCode: streamed.statusCode, problem: problem, metadata: metadata);
     }
   }
@@ -397,6 +399,35 @@ class CloverClient {
 
   static bool _isProblem(JsonObject value) =>
       value['type'] is String && value['title'] is String && value['status'] is int && value['code'] is String;
+
+  static ProblemDocument? _problemFromResponse(JsonObject value, int statusCode) {
+    if (_isProblem(value)) return ProblemDocument.fromJson(value);
+    final error = value['error'];
+    if (value['success'] == false && error is Map<String, dynamic>) {
+      final message = error['message'];
+      final type = error['type'];
+      final code = error['code'];
+      if (message is String && type is String && code != null) {
+        return ProblemDocument(
+          type: type,
+          title: message,
+          status: statusCode,
+          code: code.toString(),
+          detail: message,
+          requestId: value['requestId'] as String?,
+          extra: <String, dynamic>{'error': error},
+        );
+      }
+    }
+    return null;
+  }
+
+  static final Random _requestRandom = Random.secure();
+  static String _createRequestId() {
+    final bytes = List<int>.generate(16, (_) => _requestRandom.nextInt(256));
+    final value = bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+    return 'req_$value';
+  }
 
   static ResponseMetadata _metadata(int statusCode, Map<String, String> headers) {
     final normalized = <String, String>{for (final entry in headers.entries) entry.key.toLowerCase(): entry.value};

@@ -27,6 +27,42 @@ function envelope<T>(data: T, status = 202): Response {
 }
 
 describe("CloverClient V2", () => {
+  it("sends scoped camelCase messages through the clean platform route", async () => {
+    let capturedUrl = "";
+    let capturedBody = "";
+    let capturedRequestId = "";
+    const client = new CloverClient({
+      baseUrl: "https://api.example.test",
+      apiKey: "platform-secret",
+      fetch: async (url, init) => {
+        capturedUrl = String(url);
+        capturedBody = String(init?.body);
+        capturedRequestId = new Headers(init?.headers).get("x-request-id") ?? "";
+        return envelope({ id: "message-1", status: "accepted", requestId: "req_12345678" });
+      },
+    });
+    const accepted = await client.platformMessages.send(
+      { accountId: "account/a", environmentId: "environment b" },
+      {
+        from: { address: "sender@example.com" },
+        to: [{ address: "recipient@example.com" }],
+        replyTo: [{ address: "reply@example.com" }],
+        subject: "Hello",
+        text: "Queued by Clover",
+      },
+      { idempotencyKey: "send-2026-0001" },
+    );
+    expect(capturedUrl).toBe(
+      "https://api.example.test/api/v1/platform/accounts/account%2Fa/environments/environment%20b/messages",
+    );
+    expect(JSON.parse(capturedBody)).toMatchObject({
+      replyTo: [{ address: "reply@example.com" }],
+    });
+    expect(capturedBody).not.toContain("reply_to");
+    expect(capturedRequestId).toMatch(/^req_[A-Za-z0-9_-]{8,128}$/);
+    expect(accepted).toMatchObject({ id: "message-1", status: "accepted" });
+  });
+
   it("posts /api/v1/emails, unwraps CommonResponse, and sends auth headers", async () => {
     const calls: Array<{ url: string; init: RequestInit }> = [];
     const client = new CloverClient({

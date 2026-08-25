@@ -18,6 +18,7 @@ void main() {
         attempts += 1;
         expect(request.headers['authorization'], 'Bearer re_test');
         expect(request.headers['user-agent'], 'clover-sdk-dart/0.1.0');
+        expect(request.headers['x-request-id'], matches(RegExp(r'^req_[A-Za-z0-9_-]{8,128}$')));
         expect(request.headers['idempotency-key'], 'idem-1234');
         expect(request.url.toString(), contains('/api/v1/emails/a%2Fb/schedule'));
         if (attempts == 1) return http.Response('', 503, headers: {'retry-after': '0'});
@@ -75,6 +76,35 @@ void main() {
     );
 
     await expectLater(client.get('email-1'), throwsA(isA<CloverException>().having((error) => error.problem!.extra['new_extension']['flag'], 'extension', true)));
+  });
+
+  test('decodes the nested Clover V2 error envelope', () async {
+    final client = CloverClient(
+      baseUrl: 'https://api.example.test',
+      apiKey: 'key',
+      httpClient: MockClient((request) async {
+        expect(request.headers['x-request-id'], matches(RegExp(r'^req_[A-Za-z0-9_-]{8,128}$')));
+        return http.Response(
+          jsonEncode({
+            'success': false,
+            'error': {'code': 2002, 'type': 'VALIDATION_ERROR', 'message': 'Email is invalid'},
+            'timestamp': '2026-08-25T00:00:00Z',
+            'requestId': 'req_12345678',
+          }),
+          422,
+          headers: {'x-request-id': 'req_12345678'},
+        );
+      }),
+    );
+
+    await expectLater(
+      client.get('email-1'),
+      throwsA(isA<CloverException>()
+          .having((error) => error.message, 'message', 'Email is invalid')
+          .having((error) => error.problem?.code, 'code', '2002')
+          .having((error) => error.problem?.type, 'type', 'VALIDATION_ERROR')
+          .having((error) => error.problem?.requestId, 'request id', 'req_12345678')),
+    );
   });
 
   test('omits schedule-only fields from batch items', () async {
