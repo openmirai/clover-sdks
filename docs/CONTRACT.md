@@ -4,25 +4,21 @@ Verified: 2026-08-20
 
 ## Coverage
 
-Resend maintains a broad SDK ecosystem. Clover's current supported client
-contract is intentionally narrower: the Go SDK and the Go-based CLI are the
-only release-ready clients in this milestone.
+Resend maintains a broad SDK ecosystem. Clover's supported client contract for
+this milestone covers the TypeScript SDK, Go SDK, and Go-based CLI.
 
 | Ecosystem | Clover repository | Integration notes |
 | --- | --- | --- |
+| TypeScript | `packages/typescript` | npm package `@clover/sdk`; native and Resend-compatible exports |
 | Go | `packages/go` | Go module |
 | CLI | `apps/cli` | GoReleaser multi-platform binary |
 | OpenAPI | `openapi/clover-v1.json` | Byte-synced from backend `cmd/api/docs/swagger.json`; verify with `make check-openapi` |
 
-TypeScript, Python, Java/Kotlin, Rust, Swift, and Dart/Flutter package
-directories are deferred and carry no current support, compatibility, or
-publication claim. Documentation-only community guides are maintained at
+Python, Java/Kotlin, Rust, Swift, and Dart/Flutter package directories carry no
+current publication claim. Documentation-only community guides are maintained at
 [`docs/community/`](community/).
 
-## Deferred TypeScript design notes
-
-This section records future design intent only. It is not part of the current
-support or readiness claim.
+## TypeScript client surface
 
 1. **Native** — `import { CloverClient } from "@clover/sdk"`
    Clover-shaped API over `/api/v1`, unwraps `CommonResponse`, parses
@@ -115,9 +111,9 @@ The monorepo and each independently published package must include:
 6. No committed tokens, live endpoints in tests, generated build artifacts, or
    network-dependent unit tests.
 
-## Deferred TypeScript baseline
+## TypeScript release baseline
 
-Before future support, the TypeScript SDK must use:
+The TypeScript SDK uses:
 
 - `release-it` for versioning and tag/release orchestration;
 - Vitest for unit/conformance tests;

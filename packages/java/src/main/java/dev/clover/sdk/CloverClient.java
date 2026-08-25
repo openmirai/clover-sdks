@@ -60,7 +60,7 @@ public final class CloverClient {
 
   private Map<String, Object> request(String method, String path, Map<String, Object> payload, String idempotencyKey) throws IOException, InterruptedException {
     if (!method.equals("GET") && !validIdempotencyKey(idempotencyKey)) throw new IllegalArgumentException("idempotency key must match ^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$");
-    Map<String, String> headers = new LinkedHashMap<>(); headers.put("Accept", "application/json, application/problem+json"); headers.put("Authorization", "Bearer " + apiKey); headers.put("User-Agent", userAgent); if (payload != null) headers.put("Content-Type", "application/json"); if (idempotencyKey != null) headers.put("Idempotency-Key", idempotencyKey);
+    Map<String, String> headers = new LinkedHashMap<>(); headers.put("Accept", "application/json, application/problem+json"); headers.put("Authorization", "Bearer " + apiKey); headers.put("User-Agent", userAgent); headers.put("X-Request-ID", "req_" + UUID.randomUUID().toString().replace("-", "")); if (payload != null) headers.put("Content-Type", "application/json"); if (idempotencyKey != null) headers.put("Idempotency-Key", idempotencyKey);
     String body = payload == null ? null : JsonCodec.stringify(payload);
     for (int attempt = 0; ; attempt++) {
       RawResponse response;

@@ -3,7 +3,10 @@
 use std::collections::BTreeMap;
 use std::fmt;
 use std::io::Read;
-use std::time::Duration;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+static REQUEST_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum JsonValue {
@@ -154,7 +157,12 @@ impl CloverClient {
         request: JsonValue,
         idempotency_key: &str,
     ) -> Result<JsonValue, CloverError> {
-        self.request("POST", "/api/v1/emails", Some(request), Some(idempotency_key))
+        self.request(
+            "POST",
+            "/api/v1/emails",
+            Some(request),
+            Some(idempotency_key),
+        )
     }
     pub fn send_batch(
         &self,
@@ -173,7 +181,7 @@ impl CloverClient {
             .collect();
         self.request(
             "POST",
-            "/api/api/v1/emails/batch",
+            "/api/v1/emails/batch",
             Some(JsonValue::object([(
                 String::from("items"),
                 JsonValue::array(sanitized),
@@ -189,7 +197,7 @@ impl CloverClient {
     ) -> Result<JsonValue, CloverError> {
         self.request(
             "POST",
-            &format!("/api/api/v1/emails/{}/schedule", escape(id)),
+            &format!("/api/v1/emails/{}/schedule", escape(id)),
             Some(JsonValue::object([(
                 String::from("scheduled_at"),
                 scheduled_at.into(),
@@ -200,13 +208,13 @@ impl CloverClient {
     pub fn cancel(&self, id: &str, idempotency_key: &str) -> Result<JsonValue, CloverError> {
         self.request(
             "POST",
-            &format!("/api/api/v1/emails/{}/cancel", escape(id)),
+            &format!("/api/v1/emails/{}/cancel", escape(id)),
             None,
             Some(idempotency_key),
         )
     }
     pub fn get(&self, id: &str) -> Result<JsonValue, CloverError> {
-        self.request("GET", &format!("/api/api/v1/emails/{}", escape(id)), None, None)
+        self.request("GET", &format!("/api/v1/emails/{}", escape(id)), None, None)
     }
     pub fn list(&self, query: &BTreeMap<String, String>) -> Result<JsonValue, CloverError> {
         let encoded = query
@@ -261,6 +269,7 @@ impl CloverClient {
         );
         headers.insert("authorization".into(), format!("Bearer {}", self.api_key));
         headers.insert("user-agent".into(), self.user_agent.clone());
+        headers.insert("x-request-id".into(), request_id());
         if body.is_some() {
             headers.insert("content-type".into(), "application/json".into());
         }
@@ -353,11 +362,22 @@ impl CloverClient {
     }
 }
 
+fn request_id() -> String {
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let sequence = REQUEST_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+    format!("req_{timestamp:x}{sequence:016x}")
+}
+
 fn unwrap_envelope(parsed: JsonValue) -> JsonValue {
     match parsed {
         JsonValue::Object(map) if matches!(map.get("success"), Some(JsonValue::Bool(_))) => {
             if map.get("success") == Some(&JsonValue::Bool(true)) {
-                map.get("data").cloned().unwrap_or(JsonValue::Object(Default::default()))
+                map.get("data")
+                    .cloned()
+                    .unwrap_or(JsonValue::Object(Default::default()))
             } else {
                 JsonValue::Object(map)
             }

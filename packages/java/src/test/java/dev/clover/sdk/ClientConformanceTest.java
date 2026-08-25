@@ -10,6 +10,7 @@ public final class ClientConformanceTest {
   public void conformance() throws Exception {
     AtomicInteger calls = new AtomicInteger();
     CloverClient.Transport transport = (method, url, headers, body) -> {
+      assert headers.get("X-Request-ID").matches("^req_[A-Za-z0-9_-]{8,128}$");
       if (calls.incrementAndGet() == 1) return new CloverClient.RawResponse(503, Map.of(), "{\"type\":\"about:blank\",\"title\":\"Busy\",\"status\":503,\"code\":\"BUSY\",\"request_id\":\"req_12345678\",\"vendor\":{\"x\":1}}");
       return new CloverClient.RawResponse(202, Map.of("X-Request-ID", "req_12345678"), "{\"id\":\"e1\",\"status\":\"queued\",\"extra\":true}");
     };

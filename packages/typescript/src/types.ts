@@ -153,3 +153,36 @@ export interface UpdateWebhookRequest extends JsonObject {
 export interface RequestOptions {
   idempotencyKey?: string;
 }
+
+export interface PlatformScope {
+  accountId: string;
+  environmentId: string;
+}
+
+export interface PlatformAddress extends JsonObject {
+  address: string;
+  name?: string;
+}
+
+export interface PlatformSendMessageRequest extends JsonObject {
+  from: PlatformAddress;
+  to: PlatformAddress[];
+  cc?: PlatformAddress[];
+  bcc?: PlatformAddress[];
+  replyTo?: PlatformAddress[];
+  subject: string;
+  html?: string;
+  text?: string;
+  headers?: Record<string, string>;
+  tags?: Record<string, string>;
+  scheduledAt?: string;
+}
+
+export interface PlatformMessageAccepted extends JsonObject {
+  id: string;
+  status: string;
+  scheduledAt?: string;
+  requestId?: string;
+}
+
+export type PlatformMessagePage = PaginatedData<PlatformMessageAccepted>;

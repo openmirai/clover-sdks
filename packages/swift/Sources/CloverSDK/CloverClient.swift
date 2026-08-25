@@ -491,10 +491,12 @@ public final class CloverClient: Sendable {
         if method != "GET" && !(idempotencyKey.map(Self.isValidIdempotencyKey) ?? false) {
             throw CloverError(statusCode: 0, problem: nil, metadata: .init(statusCode: 0), message: "idempotencyKey must be 8-128 ASCII characters matching [A-Za-z0-9][A-Za-z0-9._:-]{7,127}")
         }
+        let requestID = "req_\(UUID().uuidString.replacingOccurrences(of: "-", with: ""))"
         var attempt = 0
         while true {
             let url = try Self.makeURL(base: configuration.baseURL, path: path)
             var headers = ["Accept": "application/json, application/problem+json", "Authorization": "Bearer \(configuration.apiKey)", "User-Agent": configuration.userAgent]
+            headers["X-Request-ID"] = requestID
             if data != nil { headers["Content-Type"] = "application/json" }
             if let idempotencyKey { headers["Idempotency-Key"] = idempotencyKey }
             let response: HTTPResponse
@@ -515,7 +517,7 @@ public final class CloverClient: Sendable {
                 let delay = metadata.retryAfter ?? configuration.retryBaseDelay * pow(2, Double(attempt)); attempt += 1
                 await sleep(delay); continue
             }
-            let problem = Self.decodeProblem(response.body)
+            let problem = Self.decodeProblem(response.body, statusCode: response.statusCode)
             throw CloverError(statusCode: response.statusCode, problem: problem, metadata: metadata)
         }
     }
@@ -561,7 +563,25 @@ public final class CloverClient: Sendable {
         }
     }
 
-    private static func decodeProblem(_ body: Data) -> ProblemDocument? {
+    private static func decodeProblem(_ body: Data, statusCode: Int) -> ProblemDocument? {
+        if let object = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
+           object["success"] as? Bool == false,
+           let error = object["error"] as? [String: Any],
+           let message = error["message"] as? String,
+           let errorType = error["type"] as? String,
+           let code = error["code"] {
+            var normalized = object
+            normalized["type"] = errorType
+            normalized["title"] = message
+            normalized["detail"] = message
+            normalized["status"] = statusCode
+            normalized["code"] = String(describing: code)
+            normalized["request_id"] = object["requestId"]
+            if let data = try? JSONSerialization.data(withJSONObject: normalized),
+               let problem = try? JSONDecoder().decode(ProblemDocument.self, from: data) {
+                return problem
+            }
+        }
         guard let problem = try? JSONDecoder().decode(ProblemDocument.self, from: body),
               problem.type != nil, problem.title != nil, problem.status != nil, problem.code != nil else { return nil }
         return problem

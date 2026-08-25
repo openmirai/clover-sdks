@@ -3,6 +3,7 @@ import { APIKeysResource } from "./resources/api-keys.js";
 import { DomainsResource } from "./resources/domains.js";
 import { EmailsResource } from "./resources/emails.js";
 import { WebhooksResource } from "./resources/webhooks.js";
+import { PlatformMessagesResource } from "./resources/platform-messages.js";
 import { createTransport, type Transport } from "./transport.js";
 import type {
   BatchEmailItem,
@@ -26,6 +27,7 @@ export class CloverClient {
   readonly domains: DomainsResource;
   readonly apiKeys: APIKeysResource;
   readonly webhooks: WebhooksResource;
+  readonly platformMessages: PlatformMessagesResource;
   private readonly transport: Transport;
 
   constructor(options: ClientOptions) {
@@ -34,6 +36,7 @@ export class CloverClient {
     this.domains = new DomainsResource(this.transport);
     this.apiKeys = new APIKeysResource(this.transport);
     this.webhooks = new WebhooksResource(this.transport);
+    this.platformMessages = new PlatformMessagesResource(this.transport);
   }
 
   /** @deprecated Prefer `emails.send` */
