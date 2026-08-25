@@ -1,5 +1,5 @@
 {
-  "name": "@clover/sdk",
+  "name": "@sendclover/sdk",
   "version": "0.1.0",
   "description": "Official TypeScript client for the Clover email API",
   "keywords": [

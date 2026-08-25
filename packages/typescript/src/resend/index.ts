@@ -491,7 +491,7 @@ class ResendWebhooks {
  * Resend Node SDK drop-in façade backed by Clover V2.
  *
  * ```ts
- * import { Resend } from "@clover/sdk/resend";
+ * import { Resend } from "@sendclover/sdk/resend";
  * const resend = new Resend(process.env.CLOVER_API_KEY, { baseUrl: "http://127.0.0.1:8080" });
  * const { data, error } = await resend.emails.send({ from, to, subject, html });
  * ```

@@ -1,17 +1,17 @@
-# `@clover/sdk`
+# `@sendclover/sdk`
 
 Official TypeScript client for the Clover V2 API (`/api/v1` + `CommonResponse`).
 
 ## Install
 
 ```sh
-npm install @clover/sdk
+npm install @sendclover/sdk
 ```
 
 ## Native client (Clover-shaped)
 
 ```ts
-import { CloverClient } from "@clover/sdk";
+import { CloverClient } from "@sendclover/sdk";
 
 const clover = new CloverClient({
   baseUrl: "http://127.0.0.1:8080", // API origin only; paths use /api/v1
@@ -62,7 +62,7 @@ still work and delegate to `emails.*`.
 For apps that already use the Resend Node SDK:
 
 ```ts
-import { Resend } from "@clover/sdk/resend";
+import { Resend } from "@sendclover/sdk/resend";
 
 const resend = new Resend(process.env.CLOVER_API_KEY, {
   baseUrl: "http://127.0.0.1:8080",
@@ -125,7 +125,7 @@ Default CI stays offline; live E2E only runs when `CLOVER_LIVE_E2E=1`.
 
 ## Optional adapters
 
-`@clover/sdk/nestjs` and `@clover/sdk/chat` remain optional peer integrations.
+`@sendclover/sdk/nestjs` and `@sendclover/sdk/chat` remain optional peer integrations.
 See previous sections in this package history for Nest and Chat adapter notes.
 
 Releases use signed `typescript/v*` tags via `release-it`; see
