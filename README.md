@@ -33,6 +33,15 @@ Use the native toolchain inside the package you are changing. The root
 `Makefile` provides the same gates used by CI:
 
 ```sh
+python3 -m pip install pre-commit==4.6.2
+make hooks-install
+```
+
+The installer enables both pre-commit checks and Conventional Commit message
+validation. It preserves a configured global `core.hooksPath`; the global hook
+may delegate to the generated repository hook without resetting Git settings.
+
+```sh
 make check
 ```
 
