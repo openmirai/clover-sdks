@@ -1,6 +1,13 @@
-.PHONY: check check-all check-layout check-openapi check-platform-routes check-typescript check-python check-go check-java check-rust check-swift check-dart check-cli
+.PHONY: hooks-install check-hooks check check-all check-layout check-openapi check-platform-routes check-typescript check-python check-go check-java check-rust check-swift check-dart check-cli
 
-check: check-layout check-openapi check-platform-routes check-go check-cli
+hooks-install:
+	./scripts/install-hooks.sh
+
+check-hooks:
+	pre-commit validate-config .pre-commit-config.yaml
+	python3 scripts/test_check_conventional_commit.py
+
+check: check-hooks check-layout check-openapi check-platform-routes check-go check-cli
 
 check-all: check check-typescript check-python check-java check-rust check-swift check-dart
 

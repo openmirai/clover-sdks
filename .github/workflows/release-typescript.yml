@@ -50,6 +50,8 @@ jobs:
           TAG_COMMIT="$(git rev-list -n 1 "$TAG")"
           git merge-base --is-ancestor "$TAG_COMMIT" origin/main
           TAG_OBJECT="$(git rev-parse "$TAG^{tag}")"
+          TAG_SUBJECT="$(git for-each-ref --format='%(contents:subject)' "refs/tags/$TAG")"
+          test "$TAG_SUBJECT" = "chore(release): publish @sendclover/sdk v$VERSION"
           test "$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$TAG_OBJECT" --jq '.verification.verified')" = "true"
           # shellcheck disable=SC2016
           node --input-type=module -e '
