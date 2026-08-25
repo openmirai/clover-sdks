@@ -9,7 +9,7 @@ release gates are complete.
 
 | Platform | Location | Distribution |
 | --- | --- | --- |
-| TypeScript | [`packages/typescript`](packages/typescript/) | npm package `@clover/sdk` |
+| TypeScript | [`packages/typescript`](packages/typescript/) | npm package `@sendclover/sdk` |
 | Go | [`packages/go`](packages/go/) | Go module `github.com/openmirai/clover-sdks/packages/go` |
 | CLI | [`apps/cli`](apps/cli/) | GoReleaser binaries and Go module `github.com/openmirai/clover-sdks/apps/cli` |
 

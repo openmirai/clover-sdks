@@ -1,89 +1,62 @@
-import { API_PREFIX, type Transport, withQuery } from "../transport.js";
+import type { Transport } from "../transport.js";
 import type {
   BatchEmailItem,
   EmailAccepted,
   EmailBatchAccepted,
   EmailPage,
-  JsonObject,
   ListEmailsOptions,
+  PlatformScope,
+  PlatformMessageDetail,
+  PlatformMessageSummary,
   RequestOptions,
   SendEmailRequest,
 } from "../types.js";
+import { PlatformMessagesResource } from "./platform-messages.js";
 
 export class EmailsResource {
-  constructor(private readonly transport: Transport) {}
+  private readonly messages: PlatformMessagesResource;
 
-  async send(
+  constructor(
+    transport: Transport,
+    private readonly scope: PlatformScope,
+  ) {
+    this.messages = new PlatformMessagesResource(transport);
+  }
+
+  send(
     request: SendEmailRequest,
     options: RequestOptions & { idempotencyKey: string },
   ): Promise<EmailAccepted> {
-    const { data } = await this.transport.request<EmailAccepted>(`${API_PREFIX}/emails`, {
-      method: "POST",
-      body: request,
-      idempotencyKey: options.idempotencyKey,
-    });
-    return data;
+    return this.messages.send(this.scope, request, options);
   }
 
-  async sendBatch(
+  sendBatch(
     items: BatchEmailItem[],
     options: RequestOptions & { idempotencyKey: string },
   ): Promise<EmailBatchAccepted> {
-    const sanitized = items.map(({ scheduled_at: _scheduledAt, ...item }) => item);
-    const { data } = await this.transport.request<EmailBatchAccepted>(
-      `${API_PREFIX}/emails/batch`,
-      {
-        method: "POST",
-        body: { items: sanitized },
-        idempotencyKey: options.idempotencyKey,
-      },
-    );
-    return data;
+    return this.messages.sendBatch(this.scope, items, options);
   }
 
-  async schedule(
+  schedule(
     id: string,
     scheduledAt: string,
     options: RequestOptions & { idempotencyKey: string },
   ): Promise<EmailAccepted> {
-    const { data } = await this.transport.request<EmailAccepted>(
-      `${API_PREFIX}/emails/${encodeURIComponent(id)}/schedule`,
-      {
-        method: "POST",
-        body: { scheduled_at: scheduledAt },
-        idempotencyKey: options.idempotencyKey,
-      },
-    );
-    return data;
+    return this.messages.schedule(this.scope, id, scheduledAt, options);
   }
 
-  async cancel(
+  cancel(
     id: string,
     options: RequestOptions & { idempotencyKey: string },
-  ): Promise<JsonObject> {
-    const { data } = await this.transport.request<JsonObject>(
-      `${API_PREFIX}/emails/${encodeURIComponent(id)}/cancel`,
-      {
-        method: "POST",
-        idempotencyKey: options.idempotencyKey,
-      },
-    );
-    return data;
+  ): Promise<PlatformMessageSummary> {
+    return this.messages.cancel(this.scope, id, options);
   }
 
-  async get(id: string): Promise<JsonObject> {
-    const { data } = await this.transport.request<JsonObject>(
-      `${API_PREFIX}/emails/${encodeURIComponent(id)}`,
-      { method: "GET" },
-    );
-    return data;
+  get(id: string): Promise<PlatformMessageDetail> {
+    return this.messages.get(this.scope, id);
   }
 
-  async list(options: ListEmailsOptions = {}): Promise<EmailPage> {
-    const { data } = await this.transport.request<EmailPage>(
-      withQuery(`${API_PREFIX}/emails`, options),
-      { method: "GET" },
-    );
-    return data;
+  list(options: ListEmailsOptions = {}): Promise<EmailPage> {
+    return this.messages.list(this.scope, options);
   }
 }

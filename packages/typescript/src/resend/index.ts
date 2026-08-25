@@ -2,11 +2,11 @@ import { CloverError } from "../errors.js";
 import {
   createIdempotencyKey,
   createTransport,
+  platformEnvironmentPath,
   type Transport,
-  API_PREFIX,
   withQuery,
 } from "../transport.js";
-import type { ClientOptions, JsonObject, SendEmailRequest } from "../types.js";
+import type { ClientOptions, JsonObject, PlatformScope, SendEmailRequest } from "../types.js";
 
 export type ResendResult<T> =
   | { data: T; error: null; headers: Record<string, string> | null }
@@ -18,6 +18,8 @@ export type ResendResult<T> =
 
 export interface ResendOptions {
   baseUrl?: string;
+  accountId?: string;
+  environmentId?: string;
   userAgent?: string;
   fetch?: typeof globalThis.fetch;
   maxRetries?: number;
@@ -37,19 +39,17 @@ export interface CreateEmailOptions {
   cc?: string | string[];
   bcc?: string | string[];
   replyTo?: string | string[];
-  reply_to?: string | string[];
   headers?: Record<string, string>;
   tags?: Tag[];
   attachments?: Array<{
-    filename?: string;
-    content?: string;
+    objectKey: string;
+    filename: string;
+    sizeBytes: number;
+    sha256: string;
     contentType?: string;
-    content_type?: string;
     contentId?: string;
-    content_id?: string;
   }>;
   scheduledAt?: string;
-  scheduled_at?: string;
 }
 
 export interface IdempotentOptions {
@@ -88,8 +88,6 @@ export function mapToTags(tags: Record<string, string> | undefined | null): Tag[
 }
 
 export function toCloverSendRequest(payload: CreateEmailOptions): SendEmailRequest {
-  const replyTo = payload.replyTo ?? payload.reply_to;
-  const scheduledAt = payload.scheduledAt ?? payload.scheduled_at;
   const request: SendEmailRequest = {
     from: parseAddress(payload.from),
     to: asAddressList(payload.to) ?? [],
@@ -97,23 +95,25 @@ export function toCloverSendRequest(payload: CreateEmailOptions): SendEmailReque
   };
   const cc = asAddressList(payload.cc);
   const bcc = asAddressList(payload.bcc);
-  const reply = asAddressList(replyTo);
+  const reply = asAddressList(payload.replyTo);
   if (cc) request.cc = cc;
   if (bcc) request.bcc = bcc;
-  if (reply) request.reply_to = reply;
+  if (reply) request.replyTo = reply;
   if (payload.html !== undefined) request.html = payload.html;
   if (payload.text !== undefined) request.text = payload.text;
   if (payload.headers) request.headers = payload.headers;
   const tags = tagsToMap(payload.tags);
   if (tags) request.tags = tags;
-  if (scheduledAt) request.scheduled_at = scheduledAt;
+  if (payload.scheduledAt) request.scheduledAt = payload.scheduledAt;
   if (payload.attachments?.length) {
     request.attachments = payload.attachments.map((attachment) => ({
-      filename: attachment.filename ?? "attachment",
-      content_type: attachment.contentType ?? attachment.content_type ?? "application/octet-stream",
-      disposition: attachment.contentId || attachment.content_id ? "inline" : "attachment",
-      content_id: attachment.contentId ?? attachment.content_id ?? null,
-      content: attachment.content,
+      objectKey: attachment.objectKey,
+      filename: attachment.filename,
+      contentType: attachment.contentType ?? "application/octet-stream",
+      disposition: attachment.contentId ? "inline" : "attachment",
+      ...(attachment.contentId ? { contentId: attachment.contentId } : {}),
+      sizeBytes: attachment.sizeBytes,
+      sha256: attachment.sha256,
     }));
   }
   return request;
@@ -167,7 +167,10 @@ function resolveIdempotencyKey(options?: IdempotentOptions): string {
 }
 
 class ResendEmails {
-  constructor(private readonly transport: Transport) {}
+  constructor(
+    private readonly transport: Transport,
+    private readonly scope: PlatformScope,
+  ) {}
 
   send(
     payload: CreateEmailOptions,
@@ -181,11 +184,14 @@ class ResendEmails {
     options?: IdempotentOptions,
   ): Promise<ResendResult<{ id: string }>> {
     return asResult(async () => {
-      const { data, meta } = await this.transport.request<{ id: string }>(`${API_PREFIX}/emails`, {
-        method: "POST",
-        body: toCloverSendRequest(payload),
-        idempotencyKey: resolveIdempotencyKey(options),
-      });
+      const { data, meta } = await this.transport.request<{ id: string }>(
+        platformEnvironmentPath(this.scope, "/messages"),
+        {
+          method: "POST",
+          body: toCloverSendRequest(payload),
+          idempotencyKey: resolveIdempotencyKey(options),
+        },
+      );
       return { data: { id: String(data.id) }, meta };
     });
   }
@@ -193,7 +199,7 @@ class ResendEmails {
   get(id: string): Promise<ResendResult<JsonObject>> {
     return asResult(async () => {
       const { data, meta } = await this.transport.request<JsonObject>(
-        `${API_PREFIX}/emails/${encodeURIComponent(id)}`,
+        platformEnvironmentPath(this.scope, `/messages/${encodeURIComponent(id)}`),
         { method: "GET" },
       );
       return { data, meta };
@@ -207,7 +213,7 @@ class ResendEmails {
       const { data, meta } = await this.transport.request<{
         items?: JsonObject[];
         pagination?: { hasNext?: boolean };
-      }>(withQuery(`${API_PREFIX}/emails`, options), { method: "GET" });
+      }>(withQuery(platformEnvironmentPath(this.scope, "/messages"), options), { method: "GET" });
       const items = data.items ?? [];
       return {
         data: {
@@ -226,10 +232,10 @@ class ResendEmails {
   ): Promise<ResendResult<{ id: string; object: "email" }>> {
     return asResult(async () => {
       const { data, meta } = await this.transport.request<{ id: string }>(
-        `${API_PREFIX}/emails/${encodeURIComponent(payload.id)}/schedule`,
+        platformEnvironmentPath(this.scope, `/messages/${encodeURIComponent(payload.id)}/schedule`),
         {
           method: "POST",
-          body: { scheduled_at: payload.scheduledAt },
+          body: { scheduledAt: payload.scheduledAt },
           idempotencyKey: resolveIdempotencyKey(options),
         },
       );
@@ -243,7 +249,7 @@ class ResendEmails {
   ): Promise<ResendResult<{ id: string; object: "email" }>> {
     return asResult(async () => {
       const { data, meta } = await this.transport.request<{ id?: string }>(
-        `${API_PREFIX}/emails/${encodeURIComponent(id)}/cancel`,
+        platformEnvironmentPath(this.scope, `/messages/${encodeURIComponent(id)}/cancel`),
         {
           method: "POST",
           idempotencyKey: resolveIdempotencyKey(options),
@@ -255,7 +261,10 @@ class ResendEmails {
 }
 
 class ResendBatch {
-  constructor(private readonly transport: Transport) {}
+  constructor(
+    private readonly transport: Transport,
+    private readonly scope: PlatformScope,
+  ) {}
 
   send(
     payload: CreateEmailOptions[],
@@ -271,11 +280,11 @@ class ResendBatch {
     return asResult(async () => {
       const items = payload.map((item) => {
         const body = toCloverSendRequest(item);
-        const { scheduled_at: _scheduledAt, ...rest } = body;
+        const { scheduledAt: _scheduledAt, ...rest } = body;
         return rest;
       });
-      const { data, meta } = await this.transport.request<{ data?: Array<{ id: string }> }>(
-        `${API_PREFIX}/emails/batch`,
+      const { data, meta } = await this.transport.request<{ items?: Array<{ id: string }> }>(
+        platformEnvironmentPath(this.scope, "/messages/batch"),
         {
           method: "POST",
           body: { items },
@@ -283,7 +292,7 @@ class ResendBatch {
         },
       );
       return {
-        data: { data: (data.data ?? []).map((item) => ({ id: String(item.id) })) },
+        data: { data: (data.items ?? []).map((item) => ({ id: String(item.id) })) },
         meta,
       };
     });
@@ -291,30 +300,30 @@ class ResendBatch {
 }
 
 class ResendDomains {
-  constructor(private readonly transport: Transport) {}
+  constructor(
+    private readonly transport: Transport,
+    private readonly scope: PlatformScope,
+  ) {}
 
   create(
     payload: {
       name: string;
-      region?: string;
-      provider?: string;
-      receivingEnabled?: boolean;
-      tlsPolicy?: string;
+      providerBindingId: string;
     },
     options?: IdempotentOptions,
   ): Promise<ResendResult<JsonObject>> {
     return asResult(async () => {
-      const { data, meta } = await this.transport.request<JsonObject>(`${API_PREFIX}/domains`, {
-        method: "POST",
-        body: {
-          name: payload.name,
-          provider: payload.provider ?? "smtp",
-          region: payload.region ?? "local",
-          receivingEnabled: payload.receivingEnabled ?? false,
-          tlsPolicy: payload.tlsPolicy ?? "opportunistic",
+      const { data, meta } = await this.transport.request<JsonObject>(
+        platformEnvironmentPath(this.scope, "/domains"),
+        {
+          method: "POST",
+          body: {
+            domain: payload.name,
+            providerBindingId: payload.providerBindingId,
+          },
+          idempotencyKey: resolveIdempotencyKey(options),
         },
-        idempotencyKey: resolveIdempotencyKey(options),
-      });
+      );
       return { data, meta };
     });
   }
@@ -324,46 +333,19 @@ class ResendDomains {
   ): Promise<ResendResult<{ object: "list"; data: JsonObject[] }>> {
     return asResult(async () => {
       const { data, meta } = await this.transport.request<{ items?: JsonObject[] }>(
-        withQuery(`${API_PREFIX}/domains`, options),
+        withQuery(platformEnvironmentPath(this.scope, "/domains"), options),
         { method: "GET" },
       );
       return { data: { object: "list", data: data.items ?? [] }, meta };
     });
   }
 
-  get(id: string): Promise<ResendResult<JsonObject>> {
+  verify(id: string, options?: IdempotentOptions): Promise<ResendResult<JsonObject>> {
     return asResult(async () => {
       const { data, meta } = await this.transport.request<JsonObject>(
-        `${API_PREFIX}/domains/${encodeURIComponent(id)}`,
-        { method: "GET" },
-      );
-      return { data, meta };
-    });
-  }
-
-  remove(
-    id: string,
-    options?: IdempotentOptions,
-  ): Promise<ResendResult<{ id: string; object: "domain"; deleted: true }>> {
-    return asResult(async () => {
-      await this.transport.request(`${API_PREFIX}/domains/${encodeURIComponent(id)}`, {
-        method: "DELETE",
-        idempotencyKey: resolveIdempotencyKey(options),
-      });
-      return { data: { id, object: "domain", deleted: true as const }, meta: { replayed: false } };
-    });
-  }
-
-  verify(
-    id: string,
-    options?: IdempotentOptions & { force?: boolean },
-  ): Promise<ResendResult<JsonObject>> {
-    return asResult(async () => {
-      const { data, meta } = await this.transport.request<JsonObject>(
-        `${API_PREFIX}/domains/${encodeURIComponent(id)}/verify`,
+        platformEnvironmentPath(this.scope, `/domains/${encodeURIComponent(id)}/verify`),
         {
           method: "POST",
-          body: options?.force === undefined ? {} : { force: options.force },
           idempotencyKey: resolveIdempotencyKey(options),
         },
       );
@@ -372,78 +354,32 @@ class ResendDomains {
   }
 }
 
-class ResendApiKeys {
-  constructor(private readonly transport: Transport) {}
-
-  create(
-    payload: { name: string; permission?: "full_access" | "sending_access"; domain_id?: string },
-    options?: IdempotentOptions,
-  ): Promise<ResendResult<{ id: string; token: string }>> {
-    return asResult(async () => {
-      const { data, meta } = await this.transport.request<{
-        key?: { id?: string };
-        token?: string;
-      }>(`${API_PREFIX}/api-keys`, {
-        method: "POST",
-        body: payload,
-        idempotencyKey: resolveIdempotencyKey(options),
-      });
-      return {
-        data: { id: String(data.key?.id ?? ""), token: String(data.token ?? "") },
-        meta,
-      };
-    });
-  }
-
-  list(
-    options: { page?: number; limit?: number } = {},
-  ): Promise<ResendResult<{ object: "list"; data: JsonObject[] }>> {
-    return asResult(async () => {
-      const { data, meta } = await this.transport.request<{ items?: JsonObject[] }>(
-        withQuery(`${API_PREFIX}/api-keys`, options),
-        { method: "GET" },
-      );
-      return { data: { object: "list", data: data.items ?? [] }, meta };
-    });
-  }
-
-  remove(
-    id: string,
-    options?: IdempotentOptions,
-  ): Promise<ResendResult<{ id: string; object: "api_key"; deleted: true }>> {
-    return asResult(async () => {
-      await this.transport.request(`${API_PREFIX}/api-keys/${encodeURIComponent(id)}`, {
-        method: "DELETE",
-        idempotencyKey: resolveIdempotencyKey(options),
-      });
-      return { data: { id, object: "api_key", deleted: true as const }, meta: { replayed: false } };
-    });
-  }
-}
-
 class ResendWebhooks {
-  constructor(private readonly transport: Transport) {}
+  constructor(
+    private readonly transport: Transport,
+    private readonly scope: PlatformScope,
+  ) {}
 
   create(
     payload: { endpoint: string; events: string[] },
     options?: IdempotentOptions,
   ): Promise<ResendResult<{ id: string; signing_secret: string; object: "webhook" }>> {
     return asResult(async () => {
-      const { data, meta } = await this.transport.request<{ id?: string; secret?: string }>(
-        `${API_PREFIX}/webhooks`,
-        {
-          method: "POST",
-          body: {
-            url: payload.endpoint,
-            subscriptions: payload.events,
-          },
-          idempotencyKey: resolveIdempotencyKey(options),
+      const { data, meta } = await this.transport.request<{
+        endpoint?: { id?: string };
+        secret?: string;
+      }>(platformEnvironmentPath(this.scope, "/webhooks"), {
+        method: "POST",
+        body: {
+          url: payload.endpoint,
+          subscriptions: payload.events,
         },
-      );
+        idempotencyKey: resolveIdempotencyKey(options),
+      });
       return {
         data: {
           object: "webhook",
-          id: String(data.id ?? ""),
+          id: String(data.endpoint?.id ?? ""),
           signing_secret: String(data.secret ?? ""),
         },
         meta,
@@ -454,7 +390,7 @@ class ResendWebhooks {
   get(id: string): Promise<ResendResult<JsonObject>> {
     return asResult(async () => {
       const { data, meta } = await this.transport.request<JsonObject>(
-        `${API_PREFIX}/webhooks/${encodeURIComponent(id)}`,
+        platformEnvironmentPath(this.scope, `/webhooks/${encodeURIComponent(id)}`),
         { method: "GET" },
       );
       return { data, meta };
@@ -462,11 +398,11 @@ class ResendWebhooks {
   }
 
   list(
-    options: { page?: number; limit?: number } = {},
+    options: { cursor?: string; limit?: number; enabled?: boolean } = {},
   ): Promise<ResendResult<{ object: "list"; data: JsonObject[] }>> {
     return asResult(async () => {
       const { data, meta } = await this.transport.request<{ items?: JsonObject[] }>(
-        withQuery(`${API_PREFIX}/webhooks`, options),
+        withQuery(platformEnvironmentPath(this.scope, "/webhooks"), options),
         { method: "GET" },
       );
       return { data: { object: "list", data: data.items ?? [] }, meta };
@@ -478,10 +414,13 @@ class ResendWebhooks {
     options?: IdempotentOptions,
   ): Promise<ResendResult<{ id: string; object: "webhook"; deleted: true }>> {
     return asResult(async () => {
-      await this.transport.request(`${API_PREFIX}/webhooks/${encodeURIComponent(id)}`, {
-        method: "DELETE",
-        idempotencyKey: resolveIdempotencyKey(options),
-      });
+      await this.transport.request(
+        platformEnvironmentPath(this.scope, `/webhooks/${encodeURIComponent(id)}`),
+        {
+          method: "DELETE",
+          idempotencyKey: resolveIdempotencyKey(options),
+        },
+      );
       return { data: { id, object: "webhook", deleted: true as const }, meta: { replayed: false } };
     });
   }
@@ -491,19 +430,24 @@ class ResendWebhooks {
  * Resend Node SDK drop-in façade backed by Clover V2.
  *
  * ```ts
- * import { Resend } from "@clover/sdk/resend";
- * const resend = new Resend(process.env.CLOVER_API_KEY, { baseUrl: "http://127.0.0.1:8080" });
+ * import { Resend } from "@sendclover/sdk/resend";
+ * const resend = new Resend(process.env.CLOVER_API_KEY, {
+ *   baseUrl: "http://127.0.0.1:8080",
+ *   accountId: process.env.CLOVER_ACCOUNT_ID!,
+ *   environmentId: process.env.CLOVER_ENVIRONMENT_ID!,
+ * });
  * const { data, error } = await resend.emails.send({ from, to, subject, html });
  * ```
  */
 export class Resend {
   readonly key?: string;
   readonly baseUrl: string;
+  readonly accountId: string;
+  readonly environmentId: string;
   readonly userAgent: string;
   readonly emails: ResendEmails;
   readonly batch: ResendBatch;
   readonly domains: ResendDomains;
-  readonly apiKeys: ResendApiKeys;
   readonly webhooks: ResendWebhooks;
 
   constructor(key?: string, options: ResendOptions = {}) {
@@ -512,6 +456,12 @@ export class Resend {
     const apiKey = key?.trim() || env?.CLOVER_API_KEY || env?.RESEND_API_KEY;
     if (!apiKey)
       throw new TypeError('Missing API key. Pass it to the constructor `new Resend("re_123")`');
+    const accountId = options.accountId?.trim() || env?.CLOVER_ACCOUNT_ID?.trim();
+    const environmentId = options.environmentId?.trim() || env?.CLOVER_ENVIRONMENT_ID?.trim();
+    if (!accountId || !environmentId) {
+      throw new TypeError("accountId and environmentId are required");
+    }
+    const scope = { accountId, environmentId };
     const baseUrl =
       options.baseUrl?.trim() ||
       env?.CLOVER_API_URL ||
@@ -520,6 +470,8 @@ export class Resend {
     const clientOptions: ClientOptions = {
       baseUrl,
       apiKey,
+      accountId,
+      environmentId,
       userAgent: options.userAgent ?? "clover-sdk-resend/0.1.0",
       fetch: options.fetch,
       maxRetries: options.maxRetries ?? 0,
@@ -530,11 +482,12 @@ export class Resend {
     const transport = createTransport(clientOptions);
     this.key = apiKey;
     this.baseUrl = baseUrl.replace(/\/$/, "");
+    this.accountId = accountId;
+    this.environmentId = environmentId;
     this.userAgent = clientOptions.userAgent!;
-    this.emails = new ResendEmails(transport);
-    this.batch = new ResendBatch(transport);
-    this.domains = new ResendDomains(transport);
-    this.apiKeys = new ResendApiKeys(transport);
-    this.webhooks = new ResendWebhooks(transport);
+    this.emails = new ResendEmails(transport, scope);
+    this.batch = new ResendBatch(transport, scope);
+    this.domains = new ResendDomains(transport, scope);
+    this.webhooks = new ResendWebhooks(transport, scope);
   }
 }

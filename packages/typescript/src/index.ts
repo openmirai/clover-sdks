@@ -1,12 +1,14 @@
 export { CloverClient, CloverError } from "./client.js";
 export type {
+  AttachmentRequest,
   BatchEmailItem,
   ClientOptions,
   CommonResponse,
-  ConfigureDomainRequest,
-  CreateAPIKeyRequest,
   CreateDomainRequest,
   CreateWebhookRequest,
+  DomainListPayload,
+  DomainOnboardingResponse,
+  DomainResponse,
   EmailAccepted,
   EmailAddress,
   EmailBatchAccepted,
@@ -18,16 +20,17 @@ export type {
   Pagination,
   PlatformAddress,
   PlatformMessageAccepted,
+  PlatformMessageDetail,
   PlatformMessagePage,
+  PlatformMessageSummary,
   PlatformScope,
   PlatformSendMessageRequest,
   RequestOptions,
   ResponseMeta,
   SendEmailRequest,
-  UpdateAPIKeyRequest,
   UpdateWebhookRequest,
+  WebhookListPayload,
 } from "./types.js";
-export { APIKeysResource } from "./resources/api-keys.js";
 export { DomainsResource } from "./resources/domains.js";
 export { EmailsResource } from "./resources/emails.js";
 export { WebhooksResource } from "./resources/webhooks.js";

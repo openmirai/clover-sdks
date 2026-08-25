@@ -9,7 +9,7 @@ this milestone covers the TypeScript SDK, Go SDK, and Go-based CLI.
 
 | Ecosystem | Clover repository | Integration notes |
 | --- | --- | --- |
-| TypeScript | `packages/typescript` | npm package `@clover/sdk`; native and Resend-compatible exports |
+| TypeScript | `packages/typescript` | npm package `@sendclover/sdk`; native and Resend-compatible exports |
 | Go | `packages/go` | Go module |
 | CLI | `apps/cli` | GoReleaser multi-platform binary |
 | OpenAPI | `openapi/clover-v1.json` | Byte-synced from backend `cmd/api/docs/swagger.json`; verify with `make check-openapi` |
@@ -20,12 +20,12 @@ current publication claim. Documentation-only community guides are maintained at
 
 ## TypeScript client surface
 
-1. **Native** — `import { CloverClient } from "@clover/sdk"`
+1. **Native** — `import { CloverClient } from "@sendclover/sdk"`
    Clover-shaped API over `/api/v1`, unwraps `CommonResponse`, parses
    `ErrorResponse`, and exposes `emails`, `domains`, `apiKeys`, and `webhooks`
    (plus legacy flat email helpers). Full-product surfaces such as tenants and
    incidents stay off the Resend façade.
-2. **Resend drop-in** — `import { Resend } from "@clover/sdk/resend"`
+2. **Resend drop-in** — `import { Resend } from "@sendclover/sdk/resend"`
    Mirrors the Resend Node surface for overlapping ops (`emails`, `batch`,
    `domains`, `apiKeys`, `webhooks`): string addresses, tag arrays, batch raw
    arrays → `{ items }`, Result-style `{ data, error }`, auto
