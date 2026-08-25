@@ -12,6 +12,8 @@ describe("optional framework adapters", () => {
     const dynamic = CloverNestModule.forRoot({
       baseUrl: "https://api.example.test",
       apiKey: "secret",
+      accountId: "account-1",
+      environmentId: "environment-1",
     });
     expect(dynamic.exports).toEqual([CLOVER_CLIENT]);
     expect(dynamic.providers[0].useFactory()).toBeInstanceOf(CloverClient);
@@ -22,15 +24,22 @@ describe("optional framework adapters", () => {
     const client = new CloverClient({
       baseUrl: "https://api.example.test",
       apiKey: "secret",
+      accountId: "account-1",
+      environmentId: "environment-1",
       fetch: async (_url, init) => {
         calls.push(init);
-        return new Response(JSON.stringify({ id: "<reply@example.test>" }), { status: 202 });
+        return new Response(
+          JSON.stringify({ success: true, data: { id: "<reply@example.test>", status: "queued" } }),
+          { status: 202 },
+        );
       },
     });
     const adapter = new CloverChatAdapter({
       fromAddress: "bot@example.test",
       baseUrl: "https://api.example.test",
       apiKey: "secret",
+      accountId: "account-1",
+      environmentId: "environment-1",
       client,
     });
     const opened = await adapter.openDM({ address: "user@example.test" });
@@ -59,6 +68,8 @@ describe("optional framework adapters", () => {
       fromAddress: "bot@example.test",
       baseUrl: "https://api.example.test",
       apiKey: "secret",
+      accountId: "account-1",
+      environmentId: "environment-1",
       webhookSecret: "hook",
       verifyWebhook: async () => false,
     });
@@ -72,9 +83,14 @@ describe("optional framework adapters", () => {
     const client = new CloverClient({
       baseUrl: "https://api.example.test",
       apiKey: "secret",
+      accountId: "account-1",
+      environmentId: "environment-1",
       fetch: async (_url, init) => {
         calls.push(init);
-        return new Response(JSON.stringify({ id: "<reply@example.test>" }), { status: 202 });
+        return new Response(
+          JSON.stringify({ success: true, data: { id: "<reply@example.test>", status: "queued" } }),
+          { status: 202 },
+        );
       },
     });
     const adapter = new CloverChatAdapter({

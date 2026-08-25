@@ -1,4 +1,4 @@
-name: Go SDK and CLI CI
+name: SDK and CLI CI
 
 on:
   push:
@@ -9,15 +9,15 @@ permissions:
   contents: read
 
 concurrency:
-  group: go-sdk-ci-${{ github.workflow }}-${{ github.ref }}
+  group: sdk-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   repository:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with: { python-version: "3.13" }
       - run: python3 scripts/check_repository.py
 
@@ -32,8 +32,8 @@ jobs:
       run:
         working-directory: ${{ matrix.directory }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
         with:
           go-version: ${{ matrix.go }}
           cache: false
@@ -42,3 +42,22 @@ jobs:
       - run: go test -race ./...
       - if: matrix.directory == 'apps/cli'
         run: go build -trimpath ./...
+
+  typescript:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: packages/typescript
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: packages/typescript/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run test:coverage
+      - run: npm pack --dry-run

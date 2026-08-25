@@ -1,20 +1,18 @@
-import { API_PREFIX, type Transport, withQuery } from "../transport.js";
+import { platformEnvironmentPath, type Transport, withQuery } from "../transport.js";
 import type {
+  BatchEmailItem,
+  EmailBatchAccepted,
   PlatformMessageAccepted,
+  PlatformMessageDetail,
   PlatformMessagePage,
+  PlatformMessageSummary,
   PlatformScope,
   PlatformSendMessageRequest,
   RequestOptions,
 } from "../types.js";
 
-const scopedPath = (scope: PlatformScope, suffix = ""): string => {
-  const accountId = scope.accountId.trim();
-  const environmentId = scope.environmentId.trim();
-  if (!accountId || !environmentId) {
-    throw new TypeError("accountId and environmentId are required");
-  }
-  return `${API_PREFIX}/platform/accounts/${encodeURIComponent(accountId)}/environments/${encodeURIComponent(environmentId)}/messages${suffix}`;
-};
+const scopedMessagesPath = (scope: PlatformScope, suffix = ""): string =>
+  platformEnvironmentPath(scope, `/messages${suffix}`);
 
 export class PlatformMessagesResource {
   constructor(private readonly transport: Transport) {}
@@ -24,17 +22,36 @@ export class PlatformMessagesResource {
     request: PlatformSendMessageRequest,
     options: RequestOptions & { idempotencyKey: string },
   ): Promise<PlatformMessageAccepted> {
-    const { data } = await this.transport.request<PlatformMessageAccepted>(scopedPath(scope), {
-      method: "POST",
-      body: request,
-      idempotencyKey: options.idempotencyKey,
-    });
+    const { data } = await this.transport.request<PlatformMessageAccepted>(
+      scopedMessagesPath(scope),
+      {
+        method: "POST",
+        body: request,
+        idempotencyKey: options.idempotencyKey,
+      },
+    );
     return data;
   }
 
-  async get(scope: PlatformScope, id: string): Promise<PlatformMessageAccepted> {
-    const { data } = await this.transport.request<PlatformMessageAccepted>(
-      scopedPath(scope, `/${encodeURIComponent(id)}`),
+  async sendBatch(
+    scope: PlatformScope,
+    items: BatchEmailItem[],
+    options: RequestOptions & { idempotencyKey: string },
+  ): Promise<EmailBatchAccepted> {
+    const { data } = await this.transport.request<EmailBatchAccepted>(
+      scopedMessagesPath(scope, "/batch"),
+      {
+        method: "POST",
+        body: { items },
+        idempotencyKey: options.idempotencyKey,
+      },
+    );
+    return data;
+  }
+
+  async get(scope: PlatformScope, id: string): Promise<PlatformMessageDetail> {
+    const { data } = await this.transport.request<PlatformMessageDetail>(
+      scopedMessagesPath(scope, `/${encodeURIComponent(id)}`),
       { method: "GET" },
     );
     return data;
@@ -45,7 +62,7 @@ export class PlatformMessagesResource {
     options: Record<string, string | number | undefined> = {},
   ): Promise<PlatformMessagePage> {
     const { data } = await this.transport.request<PlatformMessagePage>(
-      withQuery(scopedPath(scope), options),
+      withQuery(scopedMessagesPath(scope), options),
       { method: "GET" },
     );
     return data;
@@ -58,7 +75,7 @@ export class PlatformMessagesResource {
     options: RequestOptions & { idempotencyKey: string },
   ): Promise<PlatformMessageAccepted> {
     const { data } = await this.transport.request<PlatformMessageAccepted>(
-      scopedPath(scope, `/${encodeURIComponent(id)}/schedule`),
+      scopedMessagesPath(scope, `/${encodeURIComponent(id)}/schedule`),
       {
         method: "POST",
         body: { scheduledAt },
@@ -72,9 +89,9 @@ export class PlatformMessagesResource {
     scope: PlatformScope,
     id: string,
     options: RequestOptions & { idempotencyKey: string },
-  ): Promise<PlatformMessageAccepted> {
-    const { data } = await this.transport.request<PlatformMessageAccepted>(
-      scopedPath(scope, `/${encodeURIComponent(id)}/cancel`),
+  ): Promise<PlatformMessageSummary> {
+    const { data } = await this.transport.request<PlatformMessageSummary>(
+      scopedMessagesPath(scope, `/${encodeURIComponent(id)}/cancel`),
       { method: "POST", idempotencyKey: options.idempotencyKey },
     );
     return data;

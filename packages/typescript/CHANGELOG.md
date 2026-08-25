@@ -1,15 +1,15 @@
 # Changelog
 
 Releases follow [Semantic Versioning](https://semver.org/). Entries are added
-under `Unreleased` during review and are promoted by `release-it` for each
-signed `v*` tag.
+under `Unreleased` during review and are promoted by the tag-triggered release
+workflow for each `typescript/v*` tag.
 
 ## Unreleased
 
 - Adopt Clover V2 transport (`/api/v1`, `CommonResponse` unwrap, `ErrorResponse`).
-- Add native `domains`, `apiKeys`, and `webhooks` resource namespaces.
+- Add account/environment-scoped `domains` and `webhooks` resource namespaces;
+  platform API-key management remains dashboard-only and is intentionally absent.
 - Add Resend drop-in export `@sendclover/sdk/resend` with Result-style responses.
-- Add opt-in live Compose E2E (`CLOVER_LIVE_E2E=1`).
 - Auto-send `X-Request-ID` values compatible with Clover DB constraints.
 - Add account/environment-scoped `platformMessages` send, get, list, schedule,
   and cancel operations.

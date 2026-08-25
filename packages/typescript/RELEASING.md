@@ -1,16 +1,14 @@
 # Releasing
 
-1. Update `CHANGELOG.md`, run `npm run lint`, `npm run format:check`,
-   `npm run typecheck`, and `npm run test:coverage`.
-2. From a clean checkout, run `npm ci`, then `npm run release` locally with
-   npm/GitHub credentials. `release-it` bumps the version and creates the
-   release commit/tag; commit the changelog update and push the signed
-   `typescript/vX.Y.Z` tag.
-3. Configure npm trusted publishing for this repository/workflow (OIDC; no
-   long-lived npm token) before pushing the tag. The tag workflow validates the
-   SemVer tag, reruns `release-it` in its publish-only config (no duplicate
-   tag/commit), publishes with npm provenance, and creates the GitHub release.
-   Verify package contents before announcing it.
+1. Update `CHANGELOG.md` and `package.json`, then run `npm run quality` and
+   `npm pack --dry-run` from `packages/typescript`.
+2. From a clean checkout, push the signed `typescript/vX.Y.Z` tag. The tag
+   workflow performs the package quality gate and publishes with npm Trusted
+   Publishing (OIDC) and public access; no long-lived npm token or local
+   release helper is required. npm provenance is unavailable while the source
+   repository remains private.
+3. Verify the package page, tarball contents, and generated GitHub release
+   before announcing the version.
 
 The release workflow is tag-triggered and must not receive long-lived secrets
 in pull requests.

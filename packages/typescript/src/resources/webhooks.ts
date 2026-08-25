@@ -1,26 +1,34 @@
-import { API_PREFIX, type Transport, withQuery } from "../transport.js";
+import { platformEnvironmentPath, type Transport, withQuery } from "../transport.js";
 import type {
   CreateWebhookRequest,
   JsonObject,
-  PaginatedData,
+  PlatformScope,
   RequestOptions,
   UpdateWebhookRequest,
+  WebhookListPayload,
 } from "../types.js";
 
 export interface ListWebhooksOptions {
-  page?: number;
+  cursor?: string;
   limit?: number;
-  [key: string]: string | number | undefined;
+  enabled?: boolean;
+  [key: string]: string | number | boolean | undefined;
 }
 
+const webhooksPath = (scope: PlatformScope, suffix = ""): string =>
+  platformEnvironmentPath(scope, `/webhooks${suffix}`);
+
 export class WebhooksResource {
-  constructor(private readonly transport: Transport) {}
+  constructor(
+    private readonly transport: Transport,
+    private readonly scope: PlatformScope,
+  ) {}
 
   async create(
     request: CreateWebhookRequest,
     options: RequestOptions & { idempotencyKey: string },
   ): Promise<JsonObject> {
-    const { data } = await this.transport.request<JsonObject>(`${API_PREFIX}/webhooks`, {
+    const { data } = await this.transport.request<JsonObject>(webhooksPath(this.scope), {
       method: "POST",
       body: request,
       idempotencyKey: options.idempotencyKey,
@@ -28,9 +36,9 @@ export class WebhooksResource {
     return data;
   }
 
-  async list(options: ListWebhooksOptions = {}): Promise<PaginatedData<JsonObject>> {
-    const { data } = await this.transport.request<PaginatedData<JsonObject>>(
-      withQuery(`${API_PREFIX}/webhooks`, options),
+  async list(options: ListWebhooksOptions = {}): Promise<WebhookListPayload> {
+    const { data } = await this.transport.request<WebhookListPayload>(
+      withQuery(webhooksPath(this.scope), options),
       { method: "GET" },
     );
     return data;
@@ -38,7 +46,7 @@ export class WebhooksResource {
 
   async get(id: string): Promise<JsonObject> {
     const { data } = await this.transport.request<JsonObject>(
-      `${API_PREFIX}/webhooks/${encodeURIComponent(id)}`,
+      webhooksPath(this.scope, `/${encodeURIComponent(id)}`),
       { method: "GET" },
     );
     return data;
@@ -50,7 +58,7 @@ export class WebhooksResource {
     options: RequestOptions & { idempotencyKey: string },
   ): Promise<JsonObject> {
     const { data } = await this.transport.request<JsonObject>(
-      `${API_PREFIX}/webhooks/${encodeURIComponent(id)}`,
+      webhooksPath(this.scope, `/${encodeURIComponent(id)}`),
       {
         method: "PATCH",
         body: request,
@@ -65,7 +73,7 @@ export class WebhooksResource {
     options: RequestOptions & { idempotencyKey: string },
   ): Promise<JsonObject> {
     const { data } = await this.transport.request<JsonObject>(
-      `${API_PREFIX}/webhooks/${encodeURIComponent(id)}`,
+      webhooksPath(this.scope, `/${encodeURIComponent(id)}`),
       {
         method: "DELETE",
         idempotencyKey: options.idempotencyKey,
@@ -81,7 +89,7 @@ export class WebhooksResource {
     const body =
       options.overlapSeconds === undefined ? {} : { overlap_seconds: options.overlapSeconds };
     const { data } = await this.transport.request<JsonObject>(
-      `${API_PREFIX}/webhooks/${encodeURIComponent(id)}/rotate-secret`,
+      webhooksPath(this.scope, `/${encodeURIComponent(id)}/rotate-secret`),
       {
         method: "POST",
         body,

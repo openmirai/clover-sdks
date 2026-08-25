@@ -1,5 +1,4 @@
 import { CloverError } from "./errors.js";
-import { APIKeysResource } from "./resources/api-keys.js";
 import { DomainsResource } from "./resources/domains.js";
 import { EmailsResource } from "./resources/emails.js";
 import { WebhooksResource } from "./resources/webhooks.js";
@@ -14,37 +13,44 @@ import type {
   JsonObject,
   ListEmailsOptions,
   SendEmailRequest,
+  PlatformMessageDetail,
+  PlatformMessageSummary,
 } from "./types.js";
 
 /**
- * Native Clover V2 client (`/api/v1` + `CommonResponse` unwrap).
+ * Native Clover V2 client over account/environment-scoped platform routes.
  *
- * Prefer namespaced resources (`emails`, `domains`, `apiKeys`, `webhooks`).
- * Top-level email helpers remain for callers that used the previous flat API.
+ * The constructor binds `emails`, `domains`, and `webhooks` to one platform
+ * account/environment. Platform API keys remain a dashboard-only control-plane
+ * surface and are intentionally not exposed by this server-to-server client.
  */
 export class CloverClient {
+  readonly accountId: string;
+  readonly environmentId: string;
   readonly emails: EmailsResource;
   readonly domains: DomainsResource;
-  readonly apiKeys: APIKeysResource;
   readonly webhooks: WebhooksResource;
   readonly platformMessages: PlatformMessagesResource;
   private readonly transport: Transport;
 
   constructor(options: ClientOptions) {
+    this.accountId = options.accountId.trim();
+    this.environmentId = options.environmentId.trim();
+    if (!this.accountId || !this.environmentId) {
+      throw new TypeError("accountId and environmentId are required");
+    }
     this.transport = createTransport(options);
-    this.emails = new EmailsResource(this.transport);
-    this.domains = new DomainsResource(this.transport);
-    this.apiKeys = new APIKeysResource(this.transport);
-    this.webhooks = new WebhooksResource(this.transport);
+    const scope = { accountId: this.accountId, environmentId: this.environmentId };
+    this.emails = new EmailsResource(this.transport, scope);
+    this.domains = new DomainsResource(this.transport, scope);
+    this.webhooks = new WebhooksResource(this.transport, scope);
     this.platformMessages = new PlatformMessagesResource(this.transport);
   }
 
-  /** @deprecated Prefer `emails.send` */
   async send(request: SendEmailRequest, idempotencyKey: string): Promise<EmailAccepted> {
     return this.emails.send(request, { idempotencyKey });
   }
 
-  /** @deprecated Prefer `emails.sendBatch` */
   async sendBatch(
     items: BatchEmailItem[],
     idempotencyKey: string,
@@ -52,22 +58,18 @@ export class CloverClient {
     return this.emails.sendBatch(items, { idempotencyKey });
   }
 
-  /** @deprecated Prefer `emails.schedule` */
   async schedule(id: string, scheduledAt: string, idempotencyKey: string): Promise<EmailAccepted> {
     return this.emails.schedule(id, scheduledAt, { idempotencyKey });
   }
 
-  /** @deprecated Prefer `emails.cancel` */
-  async cancel(id: string, idempotencyKey: string): Promise<JsonObject> {
+  async cancel(id: string, idempotencyKey: string): Promise<PlatformMessageSummary> {
     return this.emails.cancel(id, { idempotencyKey });
   }
 
-  /** @deprecated Prefer `emails.get` */
-  async get(id: string): Promise<JsonObject> {
+  async get(id: string): Promise<PlatformMessageDetail> {
     return this.emails.get(id);
   }
 
-  /** @deprecated Prefer `emails.list` */
   async list(options: ListEmailsOptions = {}): Promise<EmailPage> {
     return this.emails.list(options);
   }

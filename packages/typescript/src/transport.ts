@@ -1,5 +1,11 @@
 import { CloverError, isApiErrorBody } from "./errors.js";
-import type { ClientOptions, CommonResponse, JsonObject, ResponseMeta } from "./types.js";
+import type {
+  ClientOptions,
+  CommonResponse,
+  JsonObject,
+  PlatformScope,
+  ResponseMeta,
+} from "./types.js";
 
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
 export const IDEMPOTENCY_KEY = /^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}(?![\s\S])/;
@@ -29,6 +35,21 @@ export function normalizeBaseUrl(baseUrl: string): string {
     throw new TypeError("baseUrl must be an absolute http(s) URL without userinfo/query/fragment");
   }
   return trimmed.replace(/\/$/, "");
+}
+
+export function platformEnvironmentPath(scope: PlatformScope, suffix = ""): string {
+  const accountId = scope.accountId.trim();
+  const environmentId = scope.environmentId.trim();
+  if (!accountId || !environmentId) {
+    throw new TypeError("accountId and environmentId are required");
+  }
+  return `${API_PREFIX}/platform/accounts/${encodeURIComponent(accountId)}/environments/${encodeURIComponent(environmentId)}${suffix}`;
+}
+
+export function platformAccountPath(accountId: string, suffix = ""): string {
+  const normalized = accountId.trim();
+  if (!normalized) throw new TypeError("accountId is required");
+  return `${API_PREFIX}/platform/accounts/${encodeURIComponent(normalized)}${suffix}`;
 }
 
 export function createIdempotencyKey(): string {
@@ -135,32 +156,49 @@ export function createTransport(options: ClientOptions): Transport {
         }
 
         let parsed: JsonObject = {};
+        let validJSON = !rawText;
         if (rawText) {
           try {
             parsed = JSON.parse(rawText) as JsonObject;
+            validJSON = true;
           } catch {
             parsed = { raw: rawText };
           }
         }
 
         if (response.ok) {
-          const envelope = parsed as unknown as CommonResponse<T>;
-          if (typeof envelope.success === "boolean") {
-            if (!envelope.success) {
-              throw cloverErrorFromBody(response.status, parsed, meta);
-            }
-            const data = (envelope.data ?? {}) as T;
-            return {
-              data,
-              meta: {
-                ...meta,
-                requestId: meta.requestId ?? envelope.requestId,
-              },
-              raw: parsed,
-            };
+          if (response.status === 204) {
+            return { data: {} as T, meta, raw: {} };
           }
-          // Flat legacy body — return as-is so older mocks still work.
-          return { data: parsed as T, meta, raw: parsed };
+          if (!validJSON || !rawText) {
+            throw new CloverError(
+              "Clover success response is not a valid CommonResponse",
+              response.status,
+              undefined,
+              meta,
+            );
+          }
+          const envelope = parsed as unknown as CommonResponse<T>;
+          if (typeof envelope.success !== "boolean") {
+            throw new CloverError(
+              "Clover success response is not a valid CommonResponse",
+              response.status,
+              undefined,
+              meta,
+            );
+          }
+          if (!envelope.success) {
+            throw cloverErrorFromBody(response.status, parsed, meta);
+          }
+          const data = (envelope.data ?? {}) as T;
+          return {
+            data,
+            meta: {
+              ...meta,
+              requestId: meta.requestId ?? envelope.requestId,
+            },
+            raw: parsed,
+          };
         }
 
         if (safeToRetry && attempt < maxRetries && RETRYABLE_STATUS.has(response.status)) {
@@ -240,7 +278,7 @@ function metadata(headers: Headers): ResponseMeta {
 
 export function withQuery(
   path: string,
-  options: Record<string, string | number | undefined>,
+  options: Record<string, string | number | boolean | undefined>,
 ): string {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(options)) {

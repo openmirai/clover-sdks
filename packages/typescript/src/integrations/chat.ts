@@ -7,6 +7,10 @@ export interface CloverChatConfig {
   apiKey: string;
   /** Explicit API endpoint unless an already-configured client is injected. */
   baseUrl?: string;
+  /** Client account used by the scoped platform message route. */
+  accountId?: string;
+  /** Environment used by the scoped platform message route. */
+  environmentId?: string;
   webhookSecret?: string;
   client?: CloverClient;
   /** Application-owned signature verifier; required when a webhook secret is configured. */
@@ -75,12 +79,21 @@ export class CloverChatAdapter {
     if (!config.apiKey.trim()) throw new TypeError("apiKey is required");
     if (!config.client && !config.baseUrl?.trim())
       throw new TypeError("baseUrl or client is required");
+    if (!config.client && (!config.accountId?.trim() || !config.environmentId?.trim())) {
+      throw new TypeError("accountId and environmentId are required");
+    }
     this.from = {
       address: config.fromAddress,
       ...(config.fromName ? { name: config.fromName } : {}),
     };
     this.client =
-      config.client ?? new CloverClient({ baseUrl: config.baseUrl!, apiKey: config.apiKey });
+      config.client ??
+      new CloverClient({
+        baseUrl: config.baseUrl!,
+        apiKey: config.apiKey,
+        accountId: config.accountId!,
+        environmentId: config.environmentId!,
+      });
     if (config.webhookSecret && !config.verifyWebhook)
       throw new TypeError("verifyWebhook is required when webhookSecret is configured");
   }
