@@ -43,7 +43,7 @@
         <configuration><configLocation>checkstyle.xml</configLocation><includeTestSourceDirectory>true</includeTestSourceDirectory></configuration>
       </plugin>
       <plugin>
-        <groupId>com.github.spotbugs</groupId><artifactId>spotbugs-maven-plugin</artifactId><version>4.10.4.0</version>
+        <groupId>com.github.spotbugs</groupId><artifactId>spotbugs-maven-plugin</artifactId><version>4.10.4.1</version>
         <executions><execution><id>spotbugs</id><phase>verify</phase><goals><goal>check</goal></goals></execution></executions>
       </plugin>
       <plugin>
